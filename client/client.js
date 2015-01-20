@@ -13,8 +13,8 @@ Meteor.startup(function() {
 	};
 
 	Deps.autorun(function() {
-		Meteor.user();
-		status = Meteor.user().statusConnection;
+		var user = Meteor.user();
+		status = user && user.statusConnection;
 		startTimer();
 	});
 
