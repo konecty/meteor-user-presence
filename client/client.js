@@ -14,7 +14,7 @@ Meteor.startup(function() {
 
 	Deps.autorun(function() {
 		Meteor.user();
-		status = undefined;
+		status = Meteor.user().statusConnection;
 		startTimer();
 	});
 
