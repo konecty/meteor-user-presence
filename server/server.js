@@ -13,7 +13,7 @@ var log = function(msg, color) {
 };
 
 var logRed    = function() {log(Array.prototype.slice.call(arguments).join(' '), 'red');};
-var logGray   = function() {log(Array.prototype.slice.call(arguments).join(' '), 'gray');};
+var logGrey   = function() {log(Array.prototype.slice.call(arguments).join(' '), 'grey');};
 var logGreen  = function() {log(Array.prototype.slice.call(arguments).join(' '), 'green');};
 var logYellow = function() {log(Array.prototype.slice.call(arguments).join(' '), 'yellow');};
 
@@ -110,7 +110,7 @@ UserPresence = {
 			return;
 		};
 
-		logGray('[user-presence] setConnection', userId, connection.id, status);
+		logGrey('[user-presence] setConnection', userId, connection.id, status);
 
 		var query = {
 			_id: userId,
