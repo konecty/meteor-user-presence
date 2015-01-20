@@ -1,0 +1,1 @@
+UsersSessions = new Meteor.Collection('usersSessions');
