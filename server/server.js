@@ -136,6 +136,12 @@ Meteor.startup(function() {
 		UserPresence.createConnection(login.user._id, login.connection);
 	});
 
+	Meteor.publish(null, function() {
+		if (this.userId == null) {
+			UserPresence.removeConnection(this.connection.id);
+		}
+	});
+
 	if (Package['konecty:multiple-instances-status']) {
 		UserPresence.startObserveForDeletedServers();
 	}
