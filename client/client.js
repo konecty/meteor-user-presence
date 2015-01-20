@@ -5,10 +5,14 @@ UserPresence = {
 	awayOnWindowBlur: false,
 
 	startTimer: function() {
+		UserPresence.stopTimer();
 		timer = setTimeout(UserPresence.setAway, UserPresence.awayTime);
 	},
 	stopTimer: function() {
 		clearTimeout(timer);
+	},
+	restartTimer: function() {
+		UserPresence.startTimer();
 	},
 	setAway: function() {
 		if (status !== 'away') {
@@ -22,7 +26,6 @@ UserPresence = {
 			status = 'online';
 			Meteor.call('UserPresence:online');
 		}
-		UserPresence.stopTimer();
 		UserPresence.startTimer();
 	},
 	start: function() {
