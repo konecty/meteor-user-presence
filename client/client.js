@@ -11,7 +11,12 @@ Meteor.startup(function() {
 			}
 		}, time);
 	};
-	startTimer();
+
+	Deps.autorun(function() {
+		Meteor.user();
+		status = undefined;
+		startTimer();
+	});
 
 	var onAction = function() {
 		if (status !== 'online') {
