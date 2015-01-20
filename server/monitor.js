@@ -40,12 +40,28 @@ UserPresenceMonitor = {
 	},
 
 	setUserStatus: function(userId, status) {
-		var user = Meteor.users.findOne(userId);
+		var user = Meteor.users.findOne(userId)
+			statusConnection = status;
 
 		if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'auto') {
 			status = user.statusDefault;
 		}
 
-		Meteor.users.update({_id: userId, status: {$ne: status}}, {$set: {status: status}});
+		var query = {
+			_id: userId,
+			$or: [
+				{status: {$ne: status}},
+				{statusConnection: {$ne: statusConnection}}
+			]
+		};
+
+		var update = {
+			$set: {
+				status: status,
+				statusConnection: statusConnection
+			}
+		};
+
+		Meteor.users.update(query, update);
 	}
 }
