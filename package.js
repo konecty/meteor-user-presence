@@ -12,6 +12,8 @@ Package.onUse(function(api) {
   api.addFiles('server/monitor.js', ['server']);
   api.addFiles('client/client.js', ['client']);
   api.addFiles('common/common.js');
+
+  api.export(['UserPresence'], ['server']);
 });
 
 Package.onTest(function(api) {
