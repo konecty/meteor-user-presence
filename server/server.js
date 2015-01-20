@@ -10,7 +10,7 @@ UserPresence = {
 			var update = {
 				$pull: {
 					connections: {
-						serverId: {
+						instanceId: {
 							$nin: ids
 						}
 					}
@@ -23,12 +23,12 @@ UserPresence = {
 		}
 	},
 
-	removeConnectionsByServerId: function(serverId) {
-		console.log('removeConnectionsByServerId', serverId);
+	removeConnectionsByInstanceId: function(instanceId) {
+		console.log('removeConnectionsByInstanceId', instanceId);
 		var update = {
 			$pull: {
 				connections: {
-					serverId: serverId
+					instanceId: instanceId
 				}
 			}
 		};
@@ -44,7 +44,7 @@ UserPresence = {
 	startObserveForDeletedServers: function() {
 		InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).observeChanges({
 			removed: function(id) {
-				UserPresence.removeConnectionsByServerId(id);
+				UserPresence.removeConnectionsByInstanceId(id);
 			}
 		});
 	},
@@ -58,20 +58,39 @@ UserPresence = {
 
 		var now = new Date();
 
-		var serverId = undefined;
+		var instanceId = undefined;
 		if (Package['konecty:multiple-instances-status']) {
-			serverId = InstanceStatus.id();
+			instanceId = InstanceStatus.id();
 		};
 
 		var update = {
 			$push: {
 				connections: {
 					id: connection.id,
-					serverId: serverId,
+					instanceId: instanceId,
 					status: 'online',
 					_createdAt: now,
 					_updatedAt: now
 				}
+			}
+		};
+
+		UsersSessions.upsert(query, update);
+	},
+
+	setConnection: function(userId, connection, status) {
+		console.log('setConnection', userId, connection.id, status);
+
+		var query = {
+			_id: userId,
+			'connections.id': connection.id
+		};
+
+		var now = new Date();
+
+		var update = {
+			$set: {
+				'connections.$.status': status
 			}
 		};
 
@@ -105,7 +124,7 @@ Meteor.onConnection(function(connection) {
 
 process.on('exit', function() {
 	if (Package['konecty:multiple-instances-status']) {
-		UserPresence.removeConnectionsByServerId(InstanceStatus.id());
+		UserPresence.removeConnectionsByInstanceId(InstanceStatus.id());
 	} else {
 		UserPresence.removeAllConnections();
 	}
@@ -132,6 +151,20 @@ Meteor.startup(function() {
 			};
 
 			UserPresence.createConnection(this.userId, this.connection);
+		},
+		'UserPresence:away': function() {
+			if (!this.userId) {
+				return;
+			};
+
+			UserPresence.setConnection(this.userId, this.connection, 'away');
+		},
+		'UserPresence:online': function() {
+			if (!this.userId) {
+				return;
+			};
+
+			UserPresence.setConnection(this.userId, this.connection, 'online');
 		}
 	});
 });
