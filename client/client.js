@@ -1,10 +1,12 @@
 Meteor.startup(function() {
 	var timer,
-		time = 10000;
+		time = 10000,
+		status;
 
 	var startTimer = function() {
 		timer = setTimeout(function() {
-			if (Meteor.user().status !== 'away') {
+			if (status !== 'away') {
+				status = 'away';
 				Meteor.call('UserPresence:away');
 			}
 		}, time);
@@ -12,7 +14,8 @@ Meteor.startup(function() {
 	startTimer();
 
 	var onAction = function() {
-		if (Meteor.user().status !== 'online') {
+		if (status !== 'online') {
+			status = 'online';
 			Meteor.call('UserPresence:online');
 		}
 		clearTimeout(timer);
