@@ -5,6 +5,11 @@ UserPresenceMonitor = {
 			changed: UserPresenceMonitor.processUserSession,
 			removed: UserPresenceMonitor.processUserSession
 		});
+
+		Meteor.users.find({}).observe({
+			changed: UserPresenceMonitor.processUser,
+			removed: UserPresenceMonitor.processUser
+		});
 	},
 
 	processUserSession: function(record) {
@@ -23,6 +28,15 @@ UserPresenceMonitor = {
 		});
 
 		UserPresenceMonitor.setUserStatus(record._id, connectionStatus);
+	},
+
+	processUser: function(record) {
+
+		var userSession = UsersSessions.findOne({_id: record._id});
+
+		if (userSession) {
+			UserPresenceMonitor.processUserSession(userSession);
+		}
 	},
 
 	setUserStatus: function(userId, status) {
