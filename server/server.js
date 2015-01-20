@@ -1,4 +1,4 @@
-var allowedStatus = ['auto', 'away', 'busy', 'offline'];
+var allowedStatus = ['online', 'away', 'busy', 'offline'];
 
 UserPresence = {
 	removeLostConnections: function() {

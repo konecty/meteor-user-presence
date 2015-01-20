@@ -43,7 +43,7 @@ UserPresenceMonitor = {
 		var user = Meteor.users.findOne(userId)
 			statusConnection = status;
 
-		if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'auto') {
+		if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'online') {
 			status = user.statusDefault;
 		}
 
