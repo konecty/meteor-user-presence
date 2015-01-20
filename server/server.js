@@ -1,3 +1,5 @@
+var allowedStatus = ['auto', 'away', 'busy', 'offline'];
+
 UserPresence = {
 	removeLostConnections: function() {
 		if (Package['konecty:multiple-instances-status']) {
@@ -50,6 +52,10 @@ UserPresence = {
 	},
 
 	createConnection: function(userId, connection) {
+		if (!userId) {
+			return;
+		};
+
 		console.log('createConnection', userId, connection.id);
 
 		var query = {
@@ -79,6 +85,10 @@ UserPresence = {
 	},
 
 	setConnection: function(userId, connection, status) {
+		if (!userId) {
+			return;
+		};
+
 		console.log('setConnection', userId, connection.id, status);
 
 		var query = {
@@ -95,6 +105,20 @@ UserPresence = {
 		};
 
 		UsersSessions.upsert(query, update);
+	},
+
+	setDefaultStatus: function(userId, status) {
+		if (!userId) {
+			return;
+		};
+
+		if (allowedStatus.indexOf(status) === -1) {
+			return;
+		};
+
+		console.log('setDefaultStatus', userId, status);
+
+		Meteor.users.update({_id: userId, statusDefault: {$ne: status}}, {$set: {statusDefault: status}});
 	},
 
 	removeConnection: function(connectionId) {
@@ -151,26 +175,20 @@ Meteor.startup(function() {
 	UserPresenceMonitor.start();
 
 	Meteor.methods({
-		'UserPresence:connect': function(status) {
-			if (!this.userId) {
-				return;
-			};
-
+		'UserPresence:connect': function() {
 			UserPresence.createConnection(this.userId, this.connection);
 		},
-		'UserPresence:away': function() {
-			if (!this.userId) {
-				return;
-			};
 
+		'UserPresence:away': function() {
 			UserPresence.setConnection(this.userId, this.connection, 'away');
 		},
-		'UserPresence:online': function() {
-			if (!this.userId) {
-				return;
-			};
 
+		'UserPresence:online': function() {
 			UserPresence.setConnection(this.userId, this.connection, 'online');
+		},
+
+		'UserPresence:setDefaultStatus': function(status) {
+			UserPresence.setDefaultStatus(this.userId, status);
 		}
 	});
 });
