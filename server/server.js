@@ -172,8 +172,6 @@ Meteor.startup(function() {
 
 	UserPresence.removeLostConnections();
 
-	UserPresenceMonitor.start();
-
 	Meteor.methods({
 		'UserPresence:connect': function() {
 			UserPresence.createConnection(this.userId, this.connection);
