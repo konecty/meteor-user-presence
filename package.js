@@ -13,7 +13,8 @@ Package.onUse(function(api) {
   api.addFiles('client/client.js', ['client']);
   api.addFiles('common/common.js');
 
-  api.export(['UserPresence'], ['server']);
+  api.export(['UserPresence'], ['server', 'client']);
+  api.export(['UserPresenceMonitor'], ['server']);
 });
 
 Package.onTest(function(api) {
