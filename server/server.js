@@ -163,7 +163,9 @@ UserPresence = {
 	start: function() {
 		Meteor.onConnection(function(connection) {
 			connection.onClose(function() {
-				UserPresence.removeConnection(connection.id);
+				if (connection.user != undefined) {
+					UserPresence.removeConnection(connection.id);
+				}
 			});
 		});
 
@@ -176,12 +178,14 @@ UserPresence = {
 		});
 
 		Accounts.onLogin(function(login) {
+			login.connection.user = login.user
 			UserPresence.createConnection(login.user._id, login.connection);
 		});
 
 		Meteor.publish(null, function() {
-			if (this.userId == null) {
+			if (this.userId == null && this.connection.user != undefined) {
 				UserPresence.removeConnection(this.connection.id);
+				delete this.connection.user;
 			}
 		});
 
