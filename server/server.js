@@ -193,18 +193,22 @@ UserPresence = {
 
 		Meteor.methods({
 			'UserPresence:connect': function() {
+				this.unblock();
 				UserPresence.createConnection(this.userId, this.connection);
 			},
 
 			'UserPresence:away': function() {
+				this.unblock();
 				UserPresence.setConnection(this.userId, this.connection, 'away');
 			},
 
 			'UserPresence:online': function() {
+				this.unblock();
 				UserPresence.setConnection(this.userId, this.connection, 'online');
 			},
 
 			'UserPresence:setDefaultStatus': function(status) {
+				this.unblock();
 				UserPresence.setDefaultStatus(this.userId, status);
 			}
 		});
