@@ -128,7 +128,11 @@ UserPresence = {
 			}
 		};
 
-		UsersSessions.upsert(query, update);
+		var count = UsersSessions.update(query, update);
+
+		if (count === 0) {
+			UserPresence.createConnection(userId, connection, status);
+		};
 
 		if (status === 'online') {
 			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
