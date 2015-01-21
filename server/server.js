@@ -72,10 +72,12 @@ UserPresence = {
 		});
 	},
 
-	createConnection: function(userId, connection) {
+	createConnection: function(userId, connection, status) {
 		if (!userId) {
 			return;
 		};
+
+		status = status || 'online';
 
 		logGreen('[user-presence] createConnection', userId, connection.id);
 
@@ -95,7 +97,7 @@ UserPresence = {
 				connections: {
 					id: connection.id,
 					instanceId: instanceId,
-					status: 'online',
+					status: status,
 					_createdAt: now,
 					_updatedAt: now
 				}
