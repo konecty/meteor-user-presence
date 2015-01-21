@@ -126,6 +126,13 @@ UserPresence = {
 		};
 
 		UsersSessions.upsert(query, update);
+
+		if (status === 'online') {
+			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
+		} else if (status === 'away') {
+			UsersSessions.find({_id: userId, 'connections.status': 'online'}).count();
+			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
+		}
 	},
 
 	setDefaultStatus: function(userId, status) {
@@ -139,7 +146,7 @@ UserPresence = {
 
 		logYellow('[user-presence] setDefaultStatus', userId, status);
 
-		Meteor.users.update({_id: userId, statusDefault: {$ne: status}}, {$set: {statusDefault: status}});
+		Meteor.users.update({_id: userId, statusDefault: {$ne: status}}, {$set: {status: status, statusDefault: status}});
 	},
 
 	removeConnection: function(connectionId) {

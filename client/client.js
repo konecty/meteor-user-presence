@@ -35,6 +35,18 @@ UserPresence = {
 			UserPresence.startTimer();
 		});
 
+		Meteor.methods({
+			'UserPresence:setDefaultStatus': function(status) {
+				Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
+			},
+			'UserPresence:online': function() {
+				var user = Meteor.user();
+				if (user && user.statusDefault === 'online') {
+					Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
+				}
+			}
+		});
+
 		document.addEventListener('mousemove', UserPresence.setOnline);
 		document.addEventListener('mousedown', UserPresence.setOnline);
 		document.addEventListener('keydown', UserPresence.setOnline);
