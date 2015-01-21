@@ -123,7 +123,8 @@ UserPresence = {
 
 		var update = {
 			$set: {
-				'connections.$.status': status
+				'connections.$.status': status,
+				'connections.$._updatedAt': now
 			}
 		};
 
