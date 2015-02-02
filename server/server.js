@@ -107,7 +107,7 @@ UserPresence = {
 		UsersSessions.upsert(query, update);
 	},
 
-	setConnection: function(userId, connection, status) {
+	setConnection: function(userId, connection, status, visitor) {
 		if (!userId) {
 			return;
 		};
@@ -131,14 +131,15 @@ UserPresence = {
 		var count = UsersSessions.update(query, update);
 
 		if (count === 0) {
-			UserPresence.createConnection(userId, connection, status);
+			UserPresence.createConnection(userId, connection, status, visitor);
 		};
 
-		if (status === 'online') {
-			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
-		} else if (status === 'away') {
-			UsersSessions.find({_id: userId, 'connections.status': 'online'}).count();
-			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
+		if (visitor !== true) {
+			if (status === 'online') {
+				Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
+			} else if (status === 'away') {
+				Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
+			}
 		}
 	},
 
@@ -177,7 +178,7 @@ UserPresence = {
 	start: function() {
 		Meteor.onConnection(function(connection) {
 			connection.onClose(function() {
-				if (connection.user != undefined) {
+				if (connection.UserPresenceUserId != undefined) {
 					UserPresence.removeConnection(connection.id);
 				}
 			});
@@ -192,14 +193,14 @@ UserPresence = {
 		});
 
 		Accounts.onLogin(function(login) {
-			login.connection.user = login.user
+			login.connection.UserPresenceUserId = login.user._id;
 			UserPresence.createConnection(login.user._id, login.connection);
 		});
 
 		Meteor.publish(null, function() {
-			if (this.userId == null && this.connection.user != undefined) {
+			if (this.userId == null && this.connection.UserPresenceUserId != undefined) {
 				UserPresence.removeConnection(this.connection.id);
-				delete this.connection.user;
+				delete this.connection.UserPresenceUserId;
 			}
 		});
 
@@ -228,6 +229,17 @@ UserPresence = {
 			'UserPresence:setDefaultStatus': function(status) {
 				this.unblock();
 				UserPresence.setDefaultStatus(this.userId, status);
+			},
+
+			'UserPresence:visitor:connect': function(id) {
+				this.unblock();
+				this.connection.UserPresenceUserId = id;
+				UserPresence.createConnection(id, this.connection, 'online', true);
+			},
+
+			'UserPresence:visitor:online': function(id) {
+				this.unblock();
+				UserPresence.setConnection(id, this.connection, 'online', true);
 			}
 		});
 	}

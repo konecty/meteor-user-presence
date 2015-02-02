@@ -14,7 +14,11 @@ UserPresenceMonitor = {
 
 	processUserSession: function(record) {
 		if (record.connections == null || record.connections.length === 0) {
-			UserPresenceMonitor.setUserStatus(record._id, 'offline');
+			if (record.visitor === true) {
+				UserPresenceMonitor.setVisitorStatus(record._id, 'offline');
+			} else {
+				UserPresenceMonitor.setUserStatus(record._id, 'offline');
+			}
 			return;
 		}
 
@@ -27,7 +31,11 @@ UserPresenceMonitor = {
 			}
 		});
 
-		UserPresenceMonitor.setUserStatus(record._id, connectionStatus);
+		if (record.visitor === true) {
+			UserPresenceMonitor.setVisitorStatus(record._id, connectionStatus);
+		} else {
+			UserPresenceMonitor.setUserStatus(record._id, connectionStatus);
+		}
 	},
 
 	processUser: function(record) {
@@ -63,5 +71,7 @@ UserPresenceMonitor = {
 		};
 
 		Meteor.users.update(query, update);
-	}
+	},
+
+	setVisitorStatus: function(id, status) {}
 }
