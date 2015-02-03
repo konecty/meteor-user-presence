@@ -72,7 +72,7 @@ UserPresence = {
 		});
 	},
 
-	createConnection: function(userId, connection, status) {
+	createConnection: function(userId, connection, status, visitor) {
 		if (!userId) {
 			return;
 		};
@@ -81,7 +81,7 @@ UserPresence = {
 
 		status = status || 'online';
 
-		logGreen('[user-presence] createConnection', userId, connection.id);
+		logGreen('[user-presence] createConnection', userId, connection.id, visitor === true ? 'visitor' : 'user');
 
 		var query = {
 			_id: userId
@@ -95,6 +95,9 @@ UserPresence = {
 		};
 
 		var update = {
+			$set: {
+				visitor: visitor === true
+			},
 			$push: {
 				connections: {
 					id: connection.id,
@@ -114,7 +117,7 @@ UserPresence = {
 			return;
 		};
 
-		logGrey('[user-presence] setConnection', userId, connection.id, status);
+		logGrey('[user-presence] setConnection', userId, connection.id, status, visitor === true ? 'visitor' : 'user');
 
 		var query = {
 			_id: userId,
