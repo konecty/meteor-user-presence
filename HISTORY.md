@@ -1,3 +1,7 @@
+# 1.1.0 (2015-02-02)
+* Allow visitor status tracking
+* Prevent error when no user was not found in setUserStatus
+
 # 1.0.15 (2015-01-21)
 * Allow pass status to createConnection
 * Update field '_updatedAt' of connection when update connection status
