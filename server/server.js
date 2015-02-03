@@ -77,6 +77,8 @@ UserPresence = {
 			return;
 		};
 
+		connection.UserPresenceUserId = userId;
+
 		status = status || 'online';
 
 		logGreen('[user-presence] createConnection', userId, connection.id);
@@ -193,7 +195,6 @@ UserPresence = {
 		});
 
 		Accounts.onLogin(function(login) {
-			login.connection.UserPresenceUserId = login.user._id;
 			UserPresence.createConnection(login.user._id, login.connection);
 		});
 
@@ -233,13 +234,7 @@ UserPresence = {
 
 			'UserPresence:visitor:connect': function(id) {
 				this.unblock();
-				this.connection.UserPresenceUserId = id;
 				UserPresence.createConnection(id, this.connection, 'online', true);
-			},
-
-			'UserPresence:visitor:online': function(id) {
-				this.unblock();
-				UserPresence.setConnection(id, this.connection, 'online', true);
 			}
 		});
 	}
