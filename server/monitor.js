@@ -1,9 +1,15 @@
 UserPresenceMonitor = {
 	start: function() {
 		UsersSessions.find({}).observe({
-			added: UserPresenceMonitor.processUserSession,
-			changed: UserPresenceMonitor.processUserSession,
-			removed: UserPresenceMonitor.processUserSession
+			added: function(record) {
+				UserPresenceMonitor.processUserSession(record, 'added');
+			},
+			changed: function(record) {
+				UserPresenceMonitor.processUserSession(record, 'changed');
+			},
+			removed: function(record) {
+				UserPresenceMonitor.processUserSession(record, 'removed');
+			}
 		});
 
 		Meteor.users.find({}).observeChanges({
@@ -11,8 +17,8 @@ UserPresenceMonitor = {
 		});
 	},
 
-	processUserSession: function(record) {
 		if (record.connections == null || record.connections.length === 0) {
+	processUserSession: function(record, action) {
 			if (record.visitor === true) {
 				UserPresenceMonitor.setVisitorStatus(record._id, 'offline');
 			} else {
@@ -45,7 +51,7 @@ UserPresenceMonitor = {
 		var userSession = UsersSessions.findOne({_id: id});
 
 		if (userSession) {
-			UserPresenceMonitor.processUserSession(userSession);
+			UserPresenceMonitor.processUserSession(userSession, 'changed');
 		};
 	},
 
