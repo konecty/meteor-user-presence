@@ -1,3 +1,5 @@
+UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
+
 var allowedStatus = ['online', 'away', 'busy', 'offline'];
 
 var logEnable = false;
