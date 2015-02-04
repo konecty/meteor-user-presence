@@ -1,3 +1,12 @@
+# 1.2.0 (2015-02-04)
+* Move api common.js file to top of list
+* Create index for 'connections.instanceId' to improve performance
+* Do not process removal of users
+* Only process user changes that affects the field 'statusDefault'
+* Pass action names to processUserSession
+* Do not process removed sessions with no connections
+* Remove sessions with no connections
+
 # 1.1.0 (2015-02-02)
 * Allow visitor status tracking
 * Prevent error when no user was not found in setUserStatus
