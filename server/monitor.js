@@ -7,8 +7,7 @@ UserPresenceMonitor = {
 		});
 
 		Meteor.users.find({}).observe({
-			changed: UserPresenceMonitor.processUser,
-			removed: UserPresenceMonitor.processUser
+			changed: UserPresenceMonitor.processUser
 		});
 	},
 
