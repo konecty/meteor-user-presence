@@ -10,10 +10,10 @@ Package.onUse(function(api) {
 
   api.use('nooitaf:colors@0.0.2');
 
+  api.addFiles('common/common.js');
   api.addFiles('server/server.js', ['server']);
   api.addFiles('server/monitor.js', ['server']);
   api.addFiles('client/client.js', ['client']);
-  api.addFiles('common/common.js');
 
   api.export(['UserPresence'], ['server', 'client']);
   api.export(['UserPresenceMonitor'], ['server']);
