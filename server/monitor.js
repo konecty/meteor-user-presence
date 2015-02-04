@@ -28,6 +28,10 @@ UserPresenceMonitor = {
 			} else {
 				UserPresenceMonitor.setUserStatus(record._id, 'offline');
 			}
+
+			if (action !== 'removed') {
+				UsersSessions.remove({_id: record._id, 'connections.0': {$exists: false} });
+			};
 			return;
 		};
 
