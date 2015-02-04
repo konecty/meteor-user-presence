@@ -6,7 +6,7 @@ UserPresenceMonitor = {
 			removed: UserPresenceMonitor.processUserSession
 		});
 
-		Meteor.users.find({}).observe({
+		Meteor.users.find({}).observeChanges({
 			changed: UserPresenceMonitor.processUser
 		});
 	},
@@ -37,8 +37,12 @@ UserPresenceMonitor = {
 		};
 	},
 
-	processUser: function(record) {
-		var userSession = UsersSessions.findOne({_id: record._id});
+	processUser: function(id, fields) {
+		if (fields.statusDefault == null) {
+			return;
+		};
+
+		var userSession = UsersSessions.findOne({_id: id});
 
 		if (userSession) {
 			UserPresenceMonitor.processUserSession(userSession);
