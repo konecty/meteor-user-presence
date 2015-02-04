@@ -17,8 +17,12 @@ UserPresenceMonitor = {
 		});
 	},
 
-		if (record.connections == null || record.connections.length === 0) {
 	processUserSession: function(record, action) {
+		if (action === 'removed' && (record.connections == null || record.connections.length === 0)) {
+			return;
+		};
+
+		if (record.connections == null || record.connections.length === 0 || action === 'removed') {
 			if (record.visitor === true) {
 				UserPresenceMonitor.setVisitorStatus(record._id, 'offline');
 			} else {
