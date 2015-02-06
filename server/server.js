@@ -1,4 +1,5 @@
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
+UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
 
 var allowedStatus = ['online', 'away', 'busy', 'offline'];
 

@@ -1,3 +1,6 @@
+# 1.2.1 (2015-02-04)
+* Create index for 'connections.id' to improve performance
+
 # 1.2.0 (2015-02-04)
 * Move api common.js file to top of list
 * Create index for 'connections.instanceId' to improve performance
