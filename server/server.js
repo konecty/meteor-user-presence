@@ -200,9 +200,11 @@ UserPresence = {
 			}
 		});
 
-		Accounts.onLogin(function(login) {
-			UserPresence.createConnection(login.user._id, login.connection);
-		});
+		if (Package['accounts-base']) {
+			Accounts.onLogin(function(login) {
+				UserPresence.createConnection(login.user._id, login.connection);
+			});
+		};
 
 		Meteor.publish(null, function() {
 			if (this.userId == null && this.connection.UserPresenceUserId != undefined) {
