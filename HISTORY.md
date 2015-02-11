@@ -1,3 +1,6 @@
+# 1.2.2 (2015-02-11)
+* Use Accounts if package 'accounts-base' exists
+
 # 1.2.1 (2015-02-04)
 * Create index for 'connections.id' to improve performance
 
