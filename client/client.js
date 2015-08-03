@@ -3,6 +3,7 @@ var timer, status;
 UserPresence = {
 	awayTime: 60000, //1 minute
 	awayOnWindowBlur: false,
+	onSetUserStatus: function() {},
 
 	startTimer: function() {
 		UserPresence.stopTimer();
@@ -44,6 +45,11 @@ UserPresence = {
 				if (user && user.statusDefault === 'online') {
 					Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
 				}
+				UserPresence.onSetUserStatus(user, 'online');
+			},
+			'UserPresence:away': function() {
+				var user = Meteor.user();
+				UserPresence.onSetUserStatus(user, 'away');
 			}
 		});
 
