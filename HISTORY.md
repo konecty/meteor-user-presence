@@ -1,6 +1,9 @@
 # 1.2.4 (2015-08-03)
 * Add callback *onSetUserStatus* to watch status changes
 
+# 1.2.3 (2015-07-25)
+* Added this.ready to publication
+
 # 1.2.2 (2015-02-11)
 * Use Accounts if package 'accounts-base' exists
 
