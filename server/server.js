@@ -211,6 +211,8 @@ UserPresence = {
 				UserPresence.removeConnection(this.connection.id);
 				delete this.connection.UserPresenceUserId;
 			}
+
+			this.ready();
 		});
 
 		if (Package['konecty:multiple-instances-status']) {
