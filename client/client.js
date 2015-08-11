@@ -55,6 +55,7 @@ UserPresence = {
 
 		document.addEventListener('mousemove', UserPresence.setOnline);
 		document.addEventListener('mousedown', UserPresence.setOnline);
+		document.addEventListener('touchend', UserPresence.setOnline);
 		document.addEventListener('keydown', UserPresence.setOnline);
 		window.addEventListener('focus', UserPresence.setOnline);
 
