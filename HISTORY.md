@@ -1,3 +1,6 @@
+# 1.2.5 (2015-09-11)
+* Set user online on touch events too
+
 # 1.2.4 (2015-08-03)
 * Add callback *onSetUserStatus* to watch status changes
 
