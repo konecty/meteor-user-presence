@@ -19,7 +19,7 @@ This package monitors the user to track user's state and save 3 fields in user's
 meteor add konecty:user-presence
 ```
 
-#### And register your instace with the name you want
+#### Configure client
 ```javascript
 //CLIENT
 Meteor.startup(function() {
@@ -32,7 +32,7 @@ Meteor.startup(function() {
 });
 ```
 
-#### Get instance id
+#### Start server
 ```javascript
 //SERVER
 // Listen for new connections, login, logoff and application exit to manage user status and register methods to be used by client to set user status and default status
