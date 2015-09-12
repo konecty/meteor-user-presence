@@ -1,4 +1,7 @@
-# 1.2.5 (2015-09-11)
+# 1.2.6 (2015-09-12)
+* Add option to passa a callback to setUserStatus on UserPresenceMonitor
+
+# 1.2.5 (2015-08-11)
 * Set user online on touch events too
 
 # 1.2.4 (2015-08-03)
