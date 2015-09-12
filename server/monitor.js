@@ -1,4 +1,6 @@
 UserPresenceMonitor = {
+	onSetUserStatus: function() {},
+
 	start: function() {
 		UsersSessions.find({}).observe({
 			added: function(record) {
@@ -91,6 +93,8 @@ UserPresenceMonitor = {
 		};
 
 		Meteor.users.update(query, update);
+
+		UserPresenceMonitor.onSetUserStatus(user, status, statusConnection);
 	},
 
 	setVisitorStatus: function(id, status) {}
