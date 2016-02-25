@@ -13,10 +13,6 @@ UserPresenceMonitor = {
 				UserPresenceMonitor.processUserSession(record, 'removed');
 			}
 		});
-
-		Meteor.users.find({}).observeChanges({
-			changed: UserPresenceMonitor.processUser
-		});
 	},
 
 	processUserSession: function(record, action) {
