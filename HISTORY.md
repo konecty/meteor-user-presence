@@ -1,3 +1,6 @@
+# 1.2.8 (2016-05-25)
+* Add _.throttle to set online status
+
 # 1.2.7 (2016-05-25)
 * Remove observeChanges on the users collection
 * Accept multiple callbacks for status change

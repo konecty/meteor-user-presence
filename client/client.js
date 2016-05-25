@@ -35,13 +35,13 @@ UserPresence = {
 		}
 		UserPresence.stopTimer();
 	},
-	setOnline: function() {
+	setOnline: _.throttle(function() {
 		if (status !== 'online') {
 			status = 'online';
 			Meteor.call('UserPresence:online');
 		}
 		UserPresence.startTimer();
-	},
+	}, 200),
 	start: function() {
 		Deps.autorun(function() {
 			var user = Meteor.user();
