@@ -162,7 +162,11 @@ UserPresence = {
 
 		logYellow('[user-presence] setDefaultStatus', userId, status);
 
-		Meteor.users.update({_id: userId, statusDefault: {$ne: status}}, {$set: {status: status, statusDefault: status}});
+		var update = Meteor.users.update({_id: userId, statusDefault: {$ne: status}}, {$set: {statusDefault: status}});
+
+		if (update > 0) {
+			UserPresenceMonitor.processUser(userId, { statusDefault: status });
+		}
 	},
 
 	removeConnection: function(connectionId) {
