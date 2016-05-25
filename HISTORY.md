@@ -1,3 +1,7 @@
+# 1.2.7 (2016-05-25)
+* Remove observeChanges on the users collection
+* Accept multiple callbacks for status change
+
 # 1.2.6 (2015-09-12)
 * Add option to passa a callback to setUserStatus on UserPresenceMonitor
 
