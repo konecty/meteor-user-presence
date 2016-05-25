@@ -3,7 +3,20 @@ var timer, status;
 UserPresence = {
 	awayTime: 60000, //1 minute
 	awayOnWindowBlur: false,
-	onSetUserStatus: function() {},
+	callbacks: [],
+
+	/**
+	 * The callback will receive the following parameters: user, status
+	 */
+	onSetUserStatus: function(callback) {
+		this.callbacks.push(callback);
+	},
+
+	runCallbacks: function(user, status) {
+		this.callbacks.forEach(function(callback) {
+			callback.call(null, user, status);
+		})
+	},
 
 	startTimer: function() {
 		UserPresence.stopTimer();
@@ -45,11 +58,11 @@ UserPresence = {
 				if (user && user.statusDefault === 'online') {
 					Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
 				}
-				UserPresence.onSetUserStatus(user, 'online');
+				UserPresence.runCallbacks(user, 'online');
 			},
 			'UserPresence:away': function() {
 				var user = Meteor.user();
-				UserPresence.onSetUserStatus(user, 'away');
+				UserPresence.runCallbacks(user, 'away');
 			}
 		});
 

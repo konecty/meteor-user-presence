@@ -1,5 +1,18 @@
 UserPresenceMonitor = {
-	onSetUserStatus: function() {},
+	callbacks: [],
+
+	/**
+	 * The callback will receive the following parameters: user, status, statusConnection
+	 */
+	onSetUserStatus: function(callback) {
+		this.callbacks.push(callback);
+	},
+
+	runCallbacks: function(user, status, statusConnection) {
+		this.callbacks.forEach(function(callback) {
+			callback.call(null, user, status, statusConnection);
+		})
+	},
 
 	start: function() {
 		UsersSessions.find({}).observe({
@@ -94,7 +107,7 @@ UserPresenceMonitor = {
 
 		Meteor.users.update(query, update);
 
-		UserPresenceMonitor.onSetUserStatus(user, status, statusConnection);
+		this.runCallbacks(user, status, statusConnection);
 	},
 
 	setVisitorStatus: function(id, status) {}
