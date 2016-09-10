@@ -1,3 +1,5 @@
+/* globals UserPresenceMonitor, UsersSessions */
+
 UserPresenceMonitor = {
 	callbacks: [],
 
@@ -11,7 +13,7 @@ UserPresenceMonitor = {
 	runCallbacks: function(user, status, statusConnection) {
 		this.callbacks.forEach(function(callback) {
 			callback.call(null, user, status, statusConnection);
-		})
+		});
 	},
 
 	start: function() {
@@ -31,7 +33,7 @@ UserPresenceMonitor = {
 	processUserSession: function(record, action) {
 		if (action === 'removed' && (record.connections == null || record.connections.length === 0)) {
 			return;
-		};
+		}
 
 		if (record.connections == null || record.connections.length === 0 || action === 'removed') {
 			if (record.visitor === true) {
@@ -42,9 +44,9 @@ UserPresenceMonitor = {
 
 			if (action !== 'removed') {
 				UsersSessions.remove({_id: record._id, 'connections.0': {$exists: false} });
-			};
+			}
 			return;
-		};
+		}
 
 		var connectionStatus = 'offline';
 		record.connections.forEach(function(connection) {
@@ -52,26 +54,26 @@ UserPresenceMonitor = {
 				connectionStatus = 'online';
 			} else if (connection.status === 'away' && connectionStatus === 'offline') {
 				connectionStatus = 'away';
-			};
+			}
 		});
 
 		if (record.visitor === true) {
 			UserPresenceMonitor.setVisitorStatus(record._id, connectionStatus);
 		} else {
 			UserPresenceMonitor.setUserStatus(record._id, connectionStatus);
-		};
+		}
 	},
 
 	processUser: function(id, fields) {
 		if (fields.statusDefault == null) {
 			return;
-		};
+		}
 
 		var userSession = UsersSessions.findOne({_id: id});
 
 		if (userSession) {
 			UserPresenceMonitor.processUserSession(userSession, 'changed');
-		};
+		}
 	},
 
 	setUserStatus: function(userId, status) {
@@ -80,11 +82,11 @@ UserPresenceMonitor = {
 
 		if (!user) {
 			return;
-		};
+		}
 
 		if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'online') {
 			status = user.statusDefault;
-		};
+		}
 
 		var query = {
 			_id: userId,
@@ -106,5 +108,5 @@ UserPresenceMonitor = {
 		this.runCallbacks(user, status, statusConnection);
 	},
 
-	setVisitorStatus: function(id, status) {}
-}
+	setVisitorStatus: function(/*id, status*/) {}
+};

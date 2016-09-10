@@ -1,3 +1,5 @@
+/* globals Deps, UserPresence */
+
 var timer, status;
 
 UserPresence = {
@@ -15,7 +17,7 @@ UserPresence = {
 	runCallbacks: function(user, status) {
 		this.callbacks.forEach(function(callback) {
 			callback.call(null, user, status);
-		})
+		});
 	},
 
 	startTimer: function() {
@@ -76,4 +78,4 @@ UserPresence = {
 			window.addEventListener('blur', UserPresence.setAway);
 		}
 	}
-}
+};

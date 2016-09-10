@@ -1,3 +1,5 @@
+/* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
+
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
 UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
 
@@ -15,10 +17,18 @@ var log = function(msg, color) {
 	}
 };
 
-var logRed    = function() {log(Array.prototype.slice.call(arguments).join(' '), 'red');};
-var logGrey   = function() {log(Array.prototype.slice.call(arguments).join(' '), 'grey');};
-var logGreen  = function() {log(Array.prototype.slice.call(arguments).join(' '), 'green');};
-var logYellow = function() {log(Array.prototype.slice.call(arguments).join(' '), 'yellow');};
+var logRed = function() {
+	log(Array.prototype.slice.call(arguments).join(' '), 'red');
+};
+var logGrey = function() {
+	log(Array.prototype.slice.call(arguments).join(' '), 'grey');
+};
+var logGreen = function() {
+	log(Array.prototype.slice.call(arguments).join(' '), 'green');
+};
+var logYellow = function() {
+	log(Array.prototype.slice.call(arguments).join(' '), 'yellow');
+};
 
 UserPresence = {
 	activeLogs: function() {
@@ -78,7 +88,7 @@ UserPresence = {
 	createConnection: function(userId, connection, status, visitor) {
 		if (!userId) {
 			return;
-		};
+		}
 
 		connection.UserPresenceUserId = userId;
 
@@ -95,7 +105,7 @@ UserPresence = {
 		var instanceId = undefined;
 		if (Package['konecty:multiple-instances-status']) {
 			instanceId = InstanceStatus.id();
-		};
+		}
 
 		var update = {
 			$set: {
@@ -118,7 +128,7 @@ UserPresence = {
 	setConnection: function(userId, connection, status, visitor) {
 		if (!userId) {
 			return;
-		};
+		}
 
 		logGrey('[user-presence] setConnection', userId, connection.id, status, visitor === true ? 'visitor' : 'user');
 
@@ -140,7 +150,7 @@ UserPresence = {
 
 		if (count === 0) {
 			UserPresence.createConnection(userId, connection, status, visitor);
-		};
+		}
 
 		if (visitor !== true) {
 			if (status === 'online') {
@@ -154,11 +164,11 @@ UserPresence = {
 	setDefaultStatus: function(userId, status) {
 		if (!userId) {
 			return;
-		};
+		}
 
 		if (allowedStatus.indexOf(status) === -1) {
 			return;
-		};
+		}
 
 		logYellow('[user-presence] setDefaultStatus', userId, status);
 
@@ -190,7 +200,7 @@ UserPresence = {
 	start: function() {
 		Meteor.onConnection(function(connection) {
 			connection.onClose(function() {
-				if (connection.UserPresenceUserId != undefined) {
+				if (connection.UserPresenceUserId !== undefined && connection.UserPresenceUserId !== null) {
 					UserPresence.removeConnection(connection.id);
 				}
 			});
@@ -208,10 +218,10 @@ UserPresence = {
 			Accounts.onLogin(function(login) {
 				UserPresence.createConnection(login.user._id, login.connection);
 			});
-		};
+		}
 
 		Meteor.publish(null, function() {
-			if (this.userId == null && this.connection.UserPresenceUserId != undefined) {
+			if (this.userId == null && this.connection.UserPresenceUserId !== undefined && this.connection.UserPresenceUserId !== null) {
 				UserPresence.removeConnection(this.connection.id);
 				delete this.connection.UserPresenceUserId;
 			}
@@ -252,4 +262,4 @@ UserPresence = {
 			}
 		});
 	}
-}
+};
