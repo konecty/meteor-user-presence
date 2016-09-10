@@ -196,13 +196,13 @@ UserPresence = {
 			});
 		});
 
-		process.on('exit', function() {
+		process.on('exit', Meteor.bindEnvironment(function() {
 			if (Package['konecty:multiple-instances-status']) {
 				UserPresence.removeConnectionsByInstanceId(InstanceStatus.id());
 			} else {
 				UserPresence.removeAllConnections();
 			}
-		});
+		}));
 
 		if (Package['accounts-base']) {
 			Accounts.onLogin(function(login) {
