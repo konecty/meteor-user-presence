@@ -1,3 +1,7 @@
+# 1.2.9 (2016-09-09)
+* Fix #16; Prevent error when proccess exit
+* Fix ESLint errors
+
 # 1.2.8 (2016-05-25)
 * Add _.throttle to set online status
 
