@@ -18,7 +18,7 @@ Package.onUse(function(api) {
 
 	api.export(['UserPresence'], ['server', 'client']);
 	api.export(['UserPresenceMonitor'], ['server']);
-	api.export(['UsersSessions'], ['server']);
+	api.export(['UsersSessions'], ['server', 'client']);
 });
 
 Package.onTest(function(api) {
