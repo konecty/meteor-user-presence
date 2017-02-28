@@ -199,6 +199,8 @@ UserPresence = {
 
 	start: function() {
 		Meteor.onConnection(function(connection) {
+			UserPresence.createConnection(connection.id, connection, 'online', true);
+
 			connection.onClose(function() {
 				if (connection.UserPresenceUserId !== undefined && connection.UserPresenceUserId !== null) {
 					UserPresence.removeConnection(connection.id);
@@ -216,6 +218,7 @@ UserPresence = {
 
 		if (Package['accounts-base']) {
 			Accounts.onLogin(function(login) {
+				UserPresence.removeConnection(login.connection.id);
 				UserPresence.createConnection(login.user._id, login.connection);
 			});
 		}
@@ -224,6 +227,7 @@ UserPresence = {
 			if (this.userId == null && this.connection.UserPresenceUserId !== undefined && this.connection.UserPresenceUserId !== null) {
 				UserPresence.removeConnection(this.connection.id);
 				delete this.connection.UserPresenceUserId;
+				UserPresence.createConnection(this.connection.id, this.connection, 'online', true);
 			}
 
 			this.ready();
