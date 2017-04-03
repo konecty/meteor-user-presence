@@ -1,7 +1,6 @@
 # USER PRESENCE
 
 * Use with multiple instances: https://github.com/Konecty/meteor-multiple-instances-status
-* Running example: http://user-presence-example.meteor.com/
 * Example code: https://github.com/Konecty/meteor-user-presence-example-chat
 
 This package monitors the user to track user's state and save 3 fields in user's record:
