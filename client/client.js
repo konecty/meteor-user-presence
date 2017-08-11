@@ -45,10 +45,15 @@ UserPresence = {
 		UserPresence.startTimer();
 	}, 200),
 	start: function() {
-		Deps.autorun(function() {
-			var user = Meteor.user();
-			status = user && user.statusConnection;
-			UserPresence.startTimer();
+		// register a tracker on connection status so we can setup the away timer again (on reconnect)
+		Tracker.autorun(function() {
+			var connectionStatus = Meteor.status();
+			if (connectionStatus.connected) {
+				UserPresence.setOnline();
+			} else {
+				UserPresence.stopTimer();
+				status = 'offline';
+			}
 		});
 
 		Meteor.methods({
