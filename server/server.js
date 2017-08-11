@@ -69,7 +69,18 @@ UserPresence = {
 			}
 		};
 
-		UsersSessions.update({}, update, {multi: true});
+		var userSession = UsersSessions.findOne({ 'connections.instanceId': instanceId });
+
+		if (userSession) {
+			UsersSessions.update({ 'connections.instanceId': instanceId }, update, {multi: true});
+
+			// remove instance connections to process the new user status
+			var connections = userSession.connections.filter(function(connection) {
+				return connection.instanceId !== instanceId;
+			});
+
+			UserPresence.setStatusFromConnections(userSession._id, null, connections);
+		}
 	},
 
 	removeAllConnections: function() {
@@ -123,6 +134,8 @@ UserPresence = {
 		};
 
 		UsersSessions.upsert(query, update);
+
+		UserPresence.setStatusFromConnections(userId, status);
 	},
 
 	setConnection: function(userId, connection, status, visitor) {
@@ -153,12 +166,8 @@ UserPresence = {
 		}
 
 		if (visitor !== true) {
-			if (status === 'online') {
-				Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
-			} else if (status === 'away') {
-				Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
+			UserPresence.setStatusFromConnections(userId, status);
 			}
-		}
 	},
 
 	setDefaultStatus: function(userId, status) {
@@ -194,7 +203,33 @@ UserPresence = {
 			}
 		};
 
+		var userSession = UsersSessions.findOne({ 'connections.id': connectionId });
+
+		if (userSession) {
 		UsersSessions.update(query, update);
+
+			userSession.connections = userSession.connections.filter(function(connection) {
+				return connection.id !== connectionId;
+			});
+
+			UserPresence.setStatusFromConnections(userSession._id, null, userSession.connections);
+		}
+	},
+
+	setStatusFromConnections(userId, status, connections) {
+		var record;
+		if (typeof connections === 'undefined') {
+			record = UsersSessions.findOne(userId, { fields: { connections : 1 } });
+		}
+
+		var connectionStatus = UserPresenceMonitor.getUserStatus(connections || record.connections);
+
+		if (!status) {
+			status = connectionStatus;
+		} else if (connectionStatus === 'online') {
+			status = connectionStatus;
+		}
+		UserPresenceMonitor.setUserStatus(userId, status, connectionStatus);
 	},
 
 	start: function() {

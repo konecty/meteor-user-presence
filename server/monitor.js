@@ -16,18 +16,19 @@ UserPresenceMonitor = {
 		});
 	},
 
-	start: function() {
-		UsersSessions.find({}).observe({
-			added: function(record) {
-				UserPresenceMonitor.processUserSession(record, 'added');
-			},
-			changed: function(record) {
-				UserPresenceMonitor.processUserSession(record, 'changed');
-			},
-			removed: function(record) {
-				UserPresenceMonitor.processUserSession(record, 'removed');
+	getUserStatus: function(connections) {
+		var currentStatus = 'offline';
+		connections.forEach(function(connection) {
+			if (connection.status === 'online') {
+				currentStatus = 'online';
+			} else {
+				if (connection.status === 'away' && currentStatus === 'offline') {
+					currentStatus = 'away';
+				}
 			}
 		});
+
+		return currentStatus;
 	},
 
 	processUserSession: function(record, action) {
@@ -48,19 +49,12 @@ UserPresenceMonitor = {
 			return;
 		}
 
-		var connectionStatus = 'offline';
-		record.connections.forEach(function(connection) {
-			if (connection.status === 'online') {
-				connectionStatus = 'online';
-			} else if (connection.status === 'away' && connectionStatus === 'offline') {
-				connectionStatus = 'away';
-			}
-		});
+		var currentStatus = UserPresenceMonitor.getUserStatus(record.connections);
 
 		if (record.visitor === true) {
-			UserPresenceMonitor.setVisitorStatus(record._id, connectionStatus);
+			UserPresenceMonitor.setVisitorStatus(record._id, currentStatus, currentStatus);
 		} else {
-			UserPresenceMonitor.setUserStatus(record._id, connectionStatus);
+			UserPresenceMonitor.setUserStatus(record._id, currentStatus, currentStatus);
 		}
 	},
 
@@ -76,9 +70,12 @@ UserPresenceMonitor = {
 		}
 	},
 
-	setUserStatus: function(userId, status) {
-		var user = Meteor.users.findOne(userId),
+	setUserStatus: function(userId, status, statusConnection) {
+		var user = Meteor.users.findOne(userId);
+
+		if (typeof statusConnection === 'undefined') {
 			statusConnection = status;
+		}
 
 		if (!user) {
 			return;
