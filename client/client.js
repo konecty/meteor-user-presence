@@ -62,7 +62,7 @@ UserPresence = {
 			},
 			'UserPresence:online': function() {
 				var user = Meteor.user();
-				if (user && user.statusDefault === 'online') {
+				if (user && user.status !== 'online' && user.statusDefault === 'online') {
 					Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
 				}
 				UserPresence.runCallbacks(user, 'online');
