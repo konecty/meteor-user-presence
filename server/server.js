@@ -61,25 +61,28 @@ UserPresence = {
 
 	removeConnectionsByInstanceId: function(instanceId) {
 		logRed('[user-presence] removeConnectionsByInstanceId', instanceId);
-		var update = {
-			$pull: {
-				connections: {
-					instanceId: instanceId
+
+		var userSessions = UsersSessions.find({ 'connections.instanceId': instanceId });
+
+		if (userSessions.count() > 0) {
+			var update = {
+				$pull: {
+					connections: {
+						instanceId: instanceId
+					}
 				}
-			}
-		};
-
-		var userSession = UsersSessions.findOne({ 'connections.instanceId': instanceId });
-
-		if (userSession) {
+			};
 			UsersSessions.update({ 'connections.instanceId': instanceId }, update, {multi: true});
 
-			// remove instance connections to process the new user status
-			var connections = userSession.connections.filter(function(connection) {
-				return connection.instanceId !== instanceId;
-			});
+			userSessions.forEach(function(userSession) {
 
-			UserPresence.setStatusFromConnections(userSession._id, null, connections);
+				// remove instance connections to process the new user status
+				var connections = userSession.connections.filter(function(connection) {
+					return connection.instanceId !== instanceId;
+				});
+
+				UserPresence.setStatusFromConnections(userSession._id, null, connections);
+			});
 		}
 	},
 
@@ -167,7 +170,7 @@ UserPresence = {
 
 		if (visitor !== true) {
 			UserPresence.setStatusFromConnections(userId, status);
-			}
+		}
 	},
 
 	setDefaultStatus: function(userId, status) {
@@ -206,7 +209,7 @@ UserPresence = {
 		var userSession = UsersSessions.findOne({ 'connections.id': connectionId });
 
 		if (userSession) {
-		UsersSessions.update(query, update);
+			UsersSessions.update(query, update);
 
 			userSession.connections = userSession.connections.filter(function(connection) {
 				return connection.id !== connectionId;
