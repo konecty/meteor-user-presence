@@ -1,3 +1,9 @@
+# 1.3.0 (NEXT)
+* Remove observe query on `userSessions` and evaluate user's status on each connection status change
+* Stop away verification on disconnect and set user back online on reconnect
+* Set correct user on `UserPresence:online` stub method
+* Don't call methods if client disconnected
+
 # 1.2.9 (2016-09-09)
 * Fix #16; Prevent error when proccess exit
 * Fix ESLint errors

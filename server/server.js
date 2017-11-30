@@ -57,19 +57,35 @@ UserPresence = {
 		} else {
 			UsersSessions.remove({});
 		}
+
+		// @TODO reprocessar status
 	},
 
 	removeConnectionsByInstanceId: function(instanceId) {
 		logRed('[user-presence] removeConnectionsByInstanceId', instanceId);
-		var update = {
-			$pull: {
-				connections: {
-					instanceId: instanceId
-				}
-			}
-		};
 
-		UsersSessions.update({}, update, {multi: true});
+		var userSessions = UsersSessions.find({ 'connections.instanceId': instanceId }).fetch();
+
+		if (userSessions.length > 0) {
+			var update = {
+				$pull: {
+					connections: {
+						instanceId: instanceId
+					}
+				}
+			};
+			UsersSessions.update({ 'connections.instanceId': instanceId }, update, {multi: true});
+
+			userSessions.forEach(function(userSession) {
+
+				// remove instance connections to process the new user status
+				userSession.connections = userSession.connections.filter(function(connection) {
+					return connection.instanceId !== instanceId;
+				});
+
+				UserPresence.setStatusFromConnections(userSession._id, null, userSession);
+			});
+		}
 	},
 
 	removeAllConnections: function() {
@@ -85,7 +101,7 @@ UserPresence = {
 		});
 	},
 
-	createConnection: function(userId, connection, status, visitor) {
+	createConnection: function(userId, connection, status, metadata) {
 		if (!userId) {
 			return;
 		}
@@ -94,7 +110,7 @@ UserPresence = {
 
 		status = status || 'online';
 
-		logGreen('[user-presence] createConnection', userId, connection.id, visitor === true ? 'visitor' : 'user');
+		logGreen('[user-presence] createConnection', userId, connection.id, metadata);
 
 		var query = {
 			_id: userId
@@ -108,9 +124,6 @@ UserPresence = {
 		}
 
 		var update = {
-			$set: {
-				visitor: visitor === true
-			},
 			$push: {
 				connections: {
 					id: connection.id,
@@ -122,15 +135,24 @@ UserPresence = {
 			}
 		};
 
+		if (metadata) {
+			update.$set = {
+				metadata: metadata
+			};
+			connection.metadata = metadata;
+		}
+
 		UsersSessions.upsert(query, update);
+
+		UserPresence.setStatusFromConnections(userId, status);
 	},
 
-	setConnection: function(userId, connection, status, visitor) {
+	setConnection: function(userId, connection, status) {
 		if (!userId) {
 			return;
 		}
 
-		logGrey('[user-presence] setConnection', userId, connection.id, status, visitor === true ? 'visitor' : 'user');
+		logGrey('[user-presence] setConnection', userId, connection.id, status);
 
 		var query = {
 			_id: userId,
@@ -146,19 +168,17 @@ UserPresence = {
 			}
 		};
 
+		if (connection.metadata) {
+			update.$set.metadata = connection.metadata;
+		}
+
 		var count = UsersSessions.update(query, update);
 
 		if (count === 0) {
-			UserPresence.createConnection(userId, connection, status, visitor);
+			return UserPresence.createConnection(userId, connection, status, connection.metadata);
 		}
 
-		if (visitor !== true) {
-			if (status === 'online') {
-				Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
-			} else if (status === 'away') {
-				Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
-			}
-		}
+		UserPresence.setStatusFromConnections(userId, status);
 	},
 
 	setDefaultStatus: function(userId, status) {
@@ -194,7 +214,32 @@ UserPresence = {
 			}
 		};
 
-		UsersSessions.update(query, update);
+		var userSession = UsersSessions.findOne({ 'connections.id': connectionId });
+
+		if (userSession) {
+			UsersSessions.update(query, update);
+
+			userSession.connections = userSession.connections.filter(function(connection) {
+				return connection.id !== connectionId;
+			});
+
+			UserPresence.setStatusFromConnections(userSession._id, null, userSession);
+		}
+	},
+
+	setStatusFromConnections(userId, status, record) {
+		if (typeof record === 'undefined') {
+			record = UsersSessions.findOne(userId);
+		}
+
+		var connectionStatus = UserPresenceMonitor.getUserStatus(record.connections);
+
+		if (!status) {
+			status = connectionStatus;
+		} else if (connectionStatus === 'online') {
+			status = connectionStatus;
+		}
+		UserPresenceMonitor.setUserStatus(record, status, connectionStatus);
 	},
 
 	start: function() {
@@ -214,6 +259,7 @@ UserPresence = {
 			}
 		}));
 
+		// TODO: since client set himself as online on login as well, this might not be needed
 		if (Package['accounts-base']) {
 			Accounts.onLogin(function(login) {
 				UserPresence.createConnection(login.user._id, login.connection);
@@ -235,10 +281,41 @@ UserPresence = {
 
 		UserPresence.removeLostConnections();
 
+		UserPresenceEvents.on('setStatus', function(session, status, statusConnection) {
+			var user = Meteor.users.findOne(session._id);
+
+			if (!user) {
+				return;
+			}
+
+			if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'online') {
+				status = user.statusDefault;
+			}
+
+			var query = {
+				_id: session._id,
+				$or: [
+					{status: {$ne: status}},
+					{statusConnection: {$ne: statusConnection}}
+				]
+			};
+
+			var update = {
+				$set: {
+					status: status,
+					statusConnection: statusConnection
+				}
+			};
+
+			Meteor.users.update(query, update);
+
+			UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
+		});
+
 		Meteor.methods({
-			'UserPresence:connect': function() {
+			'UserPresence:connect': function(id, metadata) {
 				this.unblock();
-				UserPresence.createConnection(this.userId, this.connection);
+				UserPresence.createConnection(id || this.userId, this.connection, 'online', metadata);
 			},
 
 			'UserPresence:away': function() {
@@ -254,11 +331,6 @@ UserPresence = {
 			'UserPresence:setDefaultStatus': function(status) {
 				this.unblock();
 				UserPresence.setDefaultStatus(this.userId, status);
-			},
-
-			'UserPresence:visitor:connect': function(id) {
-				this.unblock();
-				UserPresence.createConnection(id, this.connection, 'online', true);
 			}
 		});
 	}
