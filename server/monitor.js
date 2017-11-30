@@ -1,19 +1,14 @@
 /* globals UserPresenceMonitor, UsersSessions */
+var EventEmitter = Npm.require('events');
+
+UserPresenceEvents = new EventEmitter();
 
 UserPresenceMonitor = {
-	callbacks: [],
-
 	/**
 	 * The callback will receive the following parameters: user, status, statusConnection
 	 */
 	onSetUserStatus: function(callback) {
-		this.callbacks.push(callback);
-	},
-
-	runCallbacks: function(user, status, statusConnection) {
-		this.callbacks.forEach(function(callback) {
-			callback.call(null, user, status, statusConnection);
-		});
+		UserPresenceEvents.on('setUserStatus', callback);
 	},
 
 	start: function() {
@@ -36,11 +31,7 @@ UserPresenceMonitor = {
 		}
 
 		if (record.connections == null || record.connections.length === 0 || action === 'removed') {
-			if (record.visitor === true) {
-				UserPresenceMonitor.setVisitorStatus(record._id, 'offline');
-			} else {
-				UserPresenceMonitor.setUserStatus(record._id, 'offline');
-			}
+			UserPresenceMonitor.setStatus(record._id, 'offline', record.metadata);
 
 			if (action !== 'removed') {
 				UsersSessions.remove({_id: record._id, 'connections.0': {$exists: false} });
@@ -57,11 +48,7 @@ UserPresenceMonitor = {
 			}
 		});
 
-		if (record.visitor === true) {
-			UserPresenceMonitor.setVisitorStatus(record._id, connectionStatus);
-		} else {
-			UserPresenceMonitor.setUserStatus(record._id, connectionStatus);
-		}
+		UserPresenceMonitor.setStatus(record._id, connectionStatus, record.metadata);
 	},
 
 	processUser: function(id, fields) {
@@ -76,37 +63,7 @@ UserPresenceMonitor = {
 		}
 	},
 
-	setUserStatus: function(userId, status) {
-		var user = Meteor.users.findOne(userId),
-			statusConnection = status;
-
-		if (!user) {
-			return;
-		}
-
-		if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'online') {
-			status = user.statusDefault;
-		}
-
-		var query = {
-			_id: userId,
-			$or: [
-				{status: {$ne: status}},
-				{statusConnection: {$ne: statusConnection}}
-			]
-		};
-
-		var update = {
-			$set: {
-				status: status,
-				statusConnection: statusConnection
-			}
-		};
-
-		Meteor.users.update(query, update);
-
-		this.runCallbacks(user, status, statusConnection);
-	},
-
-	setVisitorStatus: function(/*id, status*/) {}
+	setStatus: function(id, status, metadata) {
+		UserPresenceEvents.emit('setStatus', id, status, metadata);
+	}
 };
