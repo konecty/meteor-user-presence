@@ -1,6 +1,9 @@
 # 1.3.0 (NEXT)
 * [BREAK] Remove `visitor` related code, use the new `metadata` field instead
 * Add event emitter for tracking any connection
+* Stop away verification on disconnect and set user back online on reconnect
+* Set correct user on `UserPresence:online` stub method
+* Don't call methods if client is disconnected
 
 # 1.2.9 (2016-09-09)
 * Fix #16; Prevent error when proccess exit
