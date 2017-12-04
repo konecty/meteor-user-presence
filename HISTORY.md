@@ -1,9 +1,10 @@
-# 1.3.0 (NEXT)
+# 2.0.0 (2017-12-04)
 * [BREAK] Remove `visitor` related code, use the new `metadata` field instead
 * Add event emitter for tracking any connection
 * Stop away verification on disconnect and set user back online on reconnect
 * Set correct user on `UserPresence:online` stub method
 * Don't call methods if client is disconnected
+* Allow set a value for `userId` on client side (instead of regular `Meteor.userId()`)
 
 # 1.2.9 (2016-09-09)
 * Fix #16; Prevent error when proccess exit

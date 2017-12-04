@@ -7,6 +7,7 @@ UserPresence = {
 	awayOnWindowBlur: false,
 	callbacks: [],
 	connected: true,
+	userId: null,
 
 	/**
 	 * The callback will receive the following parameters: user, status
@@ -34,18 +35,20 @@ UserPresence = {
 	setAway: function() {
 		if (status !== 'away') {
 			status = 'away';
-			UserPresence.connected && Meteor.call('UserPresence:away');
+			UserPresence.connected && Meteor.call('UserPresence:away', UserPresence.userId);
 		}
 		UserPresence.stopTimer();
 	},
 	setOnline: _.throttle(function() {
 		if (status !== 'online') {
 			status = 'online';
-			UserPresence.connected && Meteor.call('UserPresence:online');
+			UserPresence.connected && Meteor.call('UserPresence:online', UserPresence.userId);
 		}
 		UserPresence.startTimer();
 	}, 200),
-	start: function() {
+	start: function(userId) {
+		this.userId = userId;
+
 		// register a tracker on connection status so we can setup the away timer again (on reconnect)
 		Tracker.autorun(function() {
 			var connectionStatus = Meteor.status();
