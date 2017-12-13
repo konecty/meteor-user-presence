@@ -86,7 +86,7 @@ UserPresence = {
 	},
 
 	createConnection: function(userId, connection, status, metadata) {
-		if (!userId) {
+		if (!userId || !connection.id) {
 			return;
 		}
 
