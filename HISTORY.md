@@ -1,3 +1,6 @@
+# 2.0.1 (2017-12-13)
+* Do not tracks a connection without `id`
+
 # 2.0.0 (2017-12-04)
 * [BREAK] Remove `visitor` related code, use the new `metadata` field instead
 * Add event emitter for tracking any connection
