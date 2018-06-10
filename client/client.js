@@ -1,4 +1,4 @@
-/* globals Deps, UserPresence */
+/* globals UserPresence */
 
 var timer, status;
 
@@ -7,6 +7,7 @@ UserPresence = {
 	awayOnWindowBlur: false,
 	callbacks: [],
 	connected: true,
+	started: false,
 	userId: null,
 
 	/**
@@ -24,6 +25,9 @@ UserPresence = {
 
 	startTimer: function() {
 		UserPresence.stopTimer();
+		if (!UserPresence.awayTime) {
+			return;
+		}
 		timer = setTimeout(UserPresence.setAway, UserPresence.awayTime);
 	},
 	stopTimer: function() {
@@ -47,6 +51,9 @@ UserPresence = {
 		UserPresence.startTimer();
 	}, 1000),
 	start: function(userId) {
+		if (UserPresence.started) {
+			return;
+		}
 		this.userId = userId;
 
 		// register a tracker on connection status so we can setup the away timer again (on reconnect)
@@ -61,23 +68,6 @@ UserPresence = {
 			}
 		});
 
-		Meteor.methods({
-			'UserPresence:setDefaultStatus': function(status) {
-				Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
-			},
-			'UserPresence:online': function() {
-				var user = Meteor.user();
-				if (user && user.status !== 'online' && user.statusDefault === 'online') {
-					Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
-				}
-				UserPresence.runCallbacks(user, 'online');
-			},
-			'UserPresence:away': function() {
-				var user = Meteor.user();
-				UserPresence.runCallbacks(user, 'away');
-			}
-		});
-
 		document.addEventListener('mousemove', UserPresence.setOnline);
 		document.addEventListener('mousedown', UserPresence.setOnline);
 		document.addEventListener('touchend', UserPresence.setOnline);
@@ -87,5 +77,24 @@ UserPresence = {
 		if (UserPresence.awayOnWindowBlur === true) {
 			window.addEventListener('blur', UserPresence.setAway);
 		}
+
+		UserPresence.started = true;
 	}
 };
+
+Meteor.methods({
+	'UserPresence:setDefaultStatus': function(status) {
+		Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
+	},
+	'UserPresence:online': function() {
+		var user = Meteor.user();
+		if (user && user.status !== 'online' && user.statusDefault === 'online') {
+			Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
+		}
+		UserPresence.runCallbacks(user, 'online');
+	},
+	'UserPresence:away': function() {
+		var user = Meteor.user();
+		UserPresence.runCallbacks(user, 'away');
+	}
+});
