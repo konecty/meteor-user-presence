@@ -1,3 +1,7 @@
+# 2.1.0 (2018-06-09)
+* Do not start timer if `awayTime` is `null`
+* Start user presence only once
+
 # 2.0.1 (2017-12-13)
 * Do not tracks a connection without `id`
 
