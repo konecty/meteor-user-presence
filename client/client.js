@@ -39,13 +39,13 @@ UserPresence = {
 		}
 		UserPresence.stopTimer();
 	},
-	setOnline: _.throttle(function() {
+	setOnline: _.debounce(function() {
 		if (status !== 'online') {
 			status = 'online';
 			UserPresence.connected && Meteor.call('UserPresence:online', UserPresence.userId);
 		}
 		UserPresence.startTimer();
-	}, 200),
+	}, 1000),
 	start: function(userId) {
 		this.userId = userId;
 
