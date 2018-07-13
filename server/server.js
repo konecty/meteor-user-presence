@@ -1,4 +1,20 @@
 /* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
+import MQEmitter from 'mqemitter-redis';
+import Redis from 'ioredis';
+
+const mq = MQEmitter({
+  port: process.env.REDIS_PORT || 27017,
+  host: process.env.REDIS_HOST || 'localhost',
+//   password: 'my secret',
+//   db: 4
+})
+
+const rd = new Redis({
+  port: process.env.REDIS_PORT || 27017,
+  host: process.env.REDIS_HOST || 'localhost',
+//   password: 'my secret',
+//   db: 4
+});
 
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
 UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
@@ -32,6 +48,18 @@ var logYellow = function() {
 
 const multi = { multi: true }
 const instanceId = Package['konecty:multiple-instances-status'] && InstanceStatus.id();
+
+mq.on('setUserPresence/+', function ({ topic, status }, cb) {
+	const [, userId] = topic.split('/');
+	UserPresence.setDefaultStatus(userId, status);
+	cb()
+})
+
+UserPresenceEvents.on('setStatus', (id, status, metadata) => {
+	mq.emit(`userpresence/${ id }`, status);
+	redis.hset('userpresence', id, status);
+});
+
 UserPresence = {
 	activeLogs: function() {
 		logEnable = true;
