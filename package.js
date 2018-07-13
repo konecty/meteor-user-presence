@@ -6,11 +6,12 @@ Package.describe({
 });
 
 Package.onUse(function(api) {
-	api.versionsFrom('1.0.2.1');
+	api.versionsFrom('1.6.1.3');
 
 	api.use('nooitaf:colors@1.1.2_1');
 	api.use('underscore');
 	api.use('tracker');
+	api.use('ecmascript');
 
 	api.addFiles('common/common.js');
 	api.addFiles('server/server.js', ['server']);

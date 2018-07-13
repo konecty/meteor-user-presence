@@ -30,7 +30,7 @@ UserPresenceMonitor = {
 			return;
 		}
 
-		if (record.connections == null || record.connections.length === 0 || action === 'removed') {
+		if (action === 'removed' || record.connections == null || record.connections.length === 0) {
 			UserPresenceMonitor.setStatus(record._id, 'offline', record.metadata);
 
 			if (action !== 'removed') {
@@ -39,24 +39,21 @@ UserPresenceMonitor = {
 			return;
 		}
 
-		var connectionStatus = 'offline';
-		record.connections.forEach(function(connection) {
-			if (connection.status === 'online') {
-				connectionStatus = 'online';
-			} else if (connection.status === 'away' && connectionStatus === 'offline') {
-				connectionStatus = 'away';
-			}
+		let connectionStatus = 'offline';
+		record.connections.some(function(connection) {
+			connectionStatus = connection.status;
+			return connection.status === "online";
 		});
 
 		UserPresenceMonitor.setStatus(record._id, connectionStatus, record.metadata);
 	},
 
-	processUser: function(id, fields) {
+	processUser: function(_id, fields) {
 		if (fields.statusDefault == null) {
 			return;
 		}
 
-		var userSession = UsersSessions.findOne({_id: id});
+		const userSession = UsersSessions.findOne({_id});
 
 		if (userSession) {
 			UserPresenceMonitor.processUserSession(userSession, 'changed');

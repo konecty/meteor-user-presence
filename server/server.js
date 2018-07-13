@@ -30,20 +30,25 @@ var logYellow = function() {
 	log(Array.prototype.slice.call(arguments).join(' '), 'yellow');
 };
 
+const multi = { multi: true }
+const instanceId = Package['konecty:multiple-instances-status'] && InstanceStatus.id();
 UserPresence = {
 	activeLogs: function() {
 		logEnable = true;
 	},
 
-	removeLostConnections: function() {
-		if (Package['konecty:multiple-instances-status']) {
-			var ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch();
+	removeLostConnections: instanceId ? function() {
+			const ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch().map(({_id}) => _id);
 
-			ids = ids.map(function(id) {
-				return id._id;
-			});
+			const usersId = UsersSessions.find({
+				connections: {
+					instanceId: {
+						$nin: ids
+					}
+				}
+			}, { fields: { _id: 1 } });
 
-			var update = {
+			const updateSessions = {
 				$pull: {
 					connections: {
 						instanceId: {
@@ -53,23 +58,25 @@ UserPresence = {
 				}
 			};
 
-			UsersSessions.update({}, update, {multi: true});
-		} else {
+			Meteor.users.update({ _id:{ $in: ids }}, {$set: {status: 'offline', statusConnection: 'offline'}}, multi);
+			UsersSessions.update({}, update, multi);
+		} : function() {
 			UsersSessions.remove({});
+			Meteor.users.update({}, {$set: {status: 'offline', statusConnection: 'offline'}}, multi);
 		}
 	},
 
 	removeConnectionsByInstanceId: function(instanceId) {
 		logRed('[user-presence] removeConnectionsByInstanceId', instanceId);
-		var update = {
+		const update = {
 			$pull: {
 				connections: {
-					instanceId: instanceId
+					instanceId
 				}
 			}
 		};
 
-		UsersSessions.update({}, update, {multi: true});
+		UsersSessions.update({}, update, multi);
 	},
 
 	removeAllConnections: function() {
@@ -85,34 +92,25 @@ UserPresence = {
 		});
 	},
 
-	createConnection: function(userId, connection, status, metadata) {
+	createConnection: function(_id, connection, status = 'online', metadata) {
 		if (!userId || !connection.id) {
 			return;
 		}
 
 		connection.UserPresenceUserId = userId;
 
-		status = status || 'online';
-
 		logGreen('[user-presence] createConnection', userId, connection.id, status, metadata);
 
-		var query = {
-			_id: userId
-		};
+		const query = { _id };
 
-		var now = new Date();
+		const now = new Date();
 
-		var instanceId = undefined;
-		if (Package['konecty:multiple-instances-status']) {
-			instanceId = InstanceStatus.id();
-		}
-
-		var update = {
+		const update = {
 			$push: {
 				connections: {
 					id: connection.id,
-					instanceId: instanceId,
-					status: status,
+					instanceId,
+					status,
 					_createdAt: now,
 					_updatedAt: now
 				}
@@ -121,7 +119,7 @@ UserPresence = {
 
 		if (metadata) {
 			update.$set = {
-				metadata: metadata
+				metadata
 			};
 			connection.metadata = metadata;
 		}
@@ -136,14 +134,14 @@ UserPresence = {
 
 		logGrey('[user-presence] setConnection', userId, connection.id, status);
 
-		var query = {
+		const query = {
 			_id: userId,
 			'connections.id': connection.id
 		};
 
-		var now = new Date();
+		const now = new Date();
 
-		var update = {
+		const update = {
 			$set: {
 				'connections.$.status': status,
 				'connections.$._updatedAt': now
@@ -154,48 +152,46 @@ UserPresence = {
 			update.$set.metadata = connection.metadata;
 		}
 
-		var count = UsersSessions.update(query, update);
+		const count = UsersSessions.update(query, update);
 
 		if (count === 0) {
 			return UserPresence.createConnection(userId, connection, status, connection.metadata);
 		}
 
-		if (status === 'online') {
-			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
-		} else if (status === 'away') {
-			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
+		if (status === 'online' || status === 'away') {
+			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: status}}, {$set: {status: status}});
 		}
 	},
 
-	setDefaultStatus: function(userId, status) {
+	setDefaultStatus: function(userId, statusDefault) {
 		if (!userId) {
 			return;
 		}
 
-		if (allowedStatus.indexOf(status) === -1) {
+		if (allowedStatus.indexOf(statusDefault) === -1) {
 			return;
 		}
 
-		logYellow('[user-presence] setDefaultStatus', userId, status);
+		logYellow('[user-presence] setDefaultStatus', userId, statusDefault);
 
-		var update = Meteor.users.update({_id: userId, statusDefault: {$ne: status}}, {$set: {statusDefault: status}});
+		const update = Meteor.users.update({_id: userId, statusDefault: {$ne: statusDefault}}, {$set: {statusDefault: statusDefault}});
 
 		if (update > 0) {
-			UserPresenceMonitor.processUser(userId, { statusDefault: status });
+			UserPresenceMonitor.processUser(userId, { statusDefault });
 		}
 	},
 
-	removeConnection: function(connectionId) {
-		logRed('[user-presence] removeConnection', connectionId);
+	removeConnection: function(id) {
+		logRed('[user-presence] removeConnection', id);
 
-		var query = {
-			'connections.id': connectionId
+		const query = {
+			'connections.id': id
 		};
 
-		var update = {
+		const update = {
 			$pull: {
 				connections: {
-					id: connectionId
+					id
 				}
 			}
 		};
@@ -212,12 +208,10 @@ UserPresence = {
 			});
 		});
 
-		process.on('exit', Meteor.bindEnvironment(function() {
-			if (Package['konecty:multiple-instances-status']) {
-				UserPresence.removeConnectionsByInstanceId(InstanceStatus.id());
-			} else {
+		process.on('exit', Meteor.bindEnvironment(instanceId ? function() {
+			UserPresence.removeConnectionsByInstanceId(instanceId);
+		} : function() {
 				UserPresence.removeAllConnections();
-			}
 		}));
 
 		if (Package['accounts-base']) {
@@ -241,30 +235,30 @@ UserPresence = {
 
 		UserPresence.removeLostConnections();
 
-		UserPresenceEvents.on('setStatus', function(userId, status) {
-			var user = Meteor.users.findOne(userId);
-			var statusConnection = status;
-
+		UserPresenceEvents.on('setStatus', function(_id, status) {
+			const user = Meteor.users.findOne(_id, { fields: { statusDefault: 1 } });
 			if (!user) {
 				return;
 			}
 
-			if (user.statusDefault != null && status !== 'offline' && user.statusDefault !== 'online') {
+			const statusConnection = status;
+
+			if (user.statusDefault != null &&  user.statusDefault !== 'online' && status !== 'offline') {
 				status = user.statusDefault;
 			}
 
-			var query = {
-				_id: userId,
+			const query = {
+				_id,
 				$or: [
 					{status: {$ne: status}},
 					{statusConnection: {$ne: statusConnection}}
 				]
 			};
 
-			var update = {
+			const update = {
 				$set: {
-					status: status,
-					statusConnection: statusConnection
+					status,
+					statusConnection
 				}
 			};
 
