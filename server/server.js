@@ -1,6 +1,9 @@
 /* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
 import Redis from 'ioredis';
-const prefix = 'rocket-chat/';
+const prefix = (process.env.REDIS_PREFIX || 'rocket-chat') + '/';
+
+const field = process.env.REDIS_FIELD;
+
 const redis = new Redis({
   port: process.env.REDIS_PORT || 6379,
   host: process.env.REDIS_HOST || "localhost",
@@ -46,22 +49,46 @@ var logYellow = function() {
 const multi = { multi: true }
 const instanceId = Package['konecty:multiple-instances-status'] && InstanceStatus.id();
 
-redis.psubscribe(`${ prefix }setUserPresence/*`, Meteor.bindEnvironment(function (err, count) {
-	return err && console.log(err);
-}))
-
-redis.on("pmessage", Meteor.bindEnvironment(function(pattern, topic, status) {
-	if(`${ prefix }setUserPresence/*` === pattern) {
-		const [, userId] = topic.split("/");
-		UserPresence.setDefaultStatus(userId, status);
+const redisSetStatus = field ? ({ _id }, status) => {
+	const user = Meteor.user.findOne({
+		_id
+	}, { fields: { [field]: 1} })
+	if(!user) {
+		return;
 	}
-}));
+	pub.publish(`${prefix}userPresence/${ user[field] }`, status);
+	pub.hset(`${prefix}userPresence`, user[field], status);
+} : ({ _id }, status) => {
+	pub.publish(`${ prefix }userPresence/${ _id }`, status);
+	pub.hset(`${ prefix }userPresence`, _id, status);
+}
+
+const redisOnSetStatus = field ? (pattern, topic, status) => {
+	if(`${ prefix }setUserPresence/*` === pattern) {
+		const identifier = topic.replace(pattern.replace('*', ''), '');
+		const user = Meteor.user.findOne({
+			[field]: identifier
+		}, { fields: { _id: 1} })
+		if(!user) {
+			return;
+		}
+		return UserPresence.setDefaultStatus(user._id, status);
+	}
+} : (pattern, topic, status) => {
+	if(`${ prefix }setUserPresence/*` === pattern) {
+		const identifier = topic.replace(pattern.replace("*", ""), "");
+		UserPresence.setDefaultStatus(identifier, status);
+	}
+}
 
 Meteor.startup(()=> {
-	UserPresenceEvents.on('setUserStatus',  Meteor.bindEnvironment(({ _id }, status) => {
-		pub.publish(`${ prefix }userPresence/${ _id }`, status);
-		pub.hset(`${ prefix }userPresence`, _id, status);
-	}));
+	redis.psubscribe(`${ prefix }setUserPresence/*`, Meteor.bindEnvironment(function (err, count) {
+		return err && logRed(err);
+	}))
+
+	redis.on("pmessage", Meteor.bindEnvironment(redisOnSetStatus));
+
+	UserPresenceEvents.on('setUserStatus',  Meteor.bindEnvironment(redisSetStatus));
 })
 
 UserPresence = {
