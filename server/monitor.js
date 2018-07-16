@@ -5,13 +5,18 @@ UserPresenceEvents = new EventEmitter();
 
 UserPresenceMonitor = {
 	/**
-	 * The callback will receive the following parameters: user, status, statusConnection
-	 */
+	* The callback will receive the following parameters: user, status, statusConnection
+	*/
 	onSetUserStatus: function(callback) {
 		UserPresenceEvents.on('setUserStatus', callback);
 	},
 
 	start: function() {
+		InstanceStatus.getCollection().find({}, { fields: { _id: 1 } }).observeChanges({
+			removed: function(id) {
+				UserPresence.removeConnectionsByInstanceId(id);
+			}
+		});
 		UsersSessions.find({}).observe({
 			added: function(record) {
 				UserPresenceMonitor.processUserSession(record, 'added');

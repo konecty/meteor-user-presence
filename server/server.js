@@ -1,29 +1,26 @@
 /* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
-import MQEmitter from 'mqemitter-redis';
 import Redis from 'ioredis';
+const prefix = 'rocket-chat/';
+const redis = new Redis({
+  port: process.env.REDIS_PORT || 6379,
+  host: process.env.REDIS_HOST || "localhost",
+  password: process.env.REDIS_PASSWORD
+});
 
-const mq = MQEmitter({
-  port: process.env.REDIS_PORT || 27017,
-  host: process.env.REDIS_HOST || 'localhost',
-//   password: 'my secret',
-//   db: 4
-})
-
-const rd = new Redis({
-  port: process.env.REDIS_PORT || 27017,
-  host: process.env.REDIS_HOST || 'localhost',
-//   password: 'my secret',
-//   db: 4
+const pub = new Redis({
+  port: process.env.REDIS_PORT || 6379,
+  host: process.env.REDIS_HOST || "localhost",
+  password: process.env.REDIS_PASSWORD
 });
 
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
 UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
 
-var allowedStatus = ['online', 'away', 'busy', 'offline'];
+const allowedStatus = ['online', 'away', 'busy', 'offline'];
 
-var logEnable = false;
+let logEnable = false;
 
-var log = function(msg, color) {
+const log = function(msg, color) {
 	if (logEnable) {
 		if (color) {
 			console.log(msg[color]);
@@ -49,16 +46,23 @@ var logYellow = function() {
 const multi = { multi: true }
 const instanceId = Package['konecty:multiple-instances-status'] && InstanceStatus.id();
 
-mq.on('setUserPresence/+', function ({ topic, status }, cb) {
-	const [, userId] = topic.split('/');
-	UserPresence.setDefaultStatus(userId, status);
-	cb()
-})
+redis.psubscribe(`${ prefix }setUserPresence/*`, Meteor.bindEnvironment(function (err, count) {
+	return err && console.log(err);
+}))
 
-UserPresenceEvents.on('setStatus', (id, status, metadata) => {
-	mq.emit(`userpresence/${ id }`, status);
-	redis.hset('userpresence', id, status);
-});
+redis.on("pmessage", Meteor.bindEnvironment(function(pattern, topic, status) {
+	if(`${ prefix }setUserPresence/*` === pattern) {
+		const [, userId] = topic.split("/");
+		UserPresence.setDefaultStatus(userId, status);
+	}
+}));
+
+Meteor.startup(()=> {
+	UserPresenceEvents.on('setUserStatus',  Meteor.bindEnvironment(({ _id }, status) => {
+		pub.publish(`${ prefix }userPresence/${ _id }`, status);
+		pub.hset(`${ prefix }userPresence`, _id, status);
+	}));
+})
 
 UserPresence = {
 	activeLogs: function() {
@@ -66,32 +70,24 @@ UserPresence = {
 	},
 
 	removeLostConnections: instanceId ? function() {
-			const ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch().map(({_id}) => _id);
+		const ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch().map(({_id}) => _id);
+		const connections = { instanceId: { $nin: ids } };
 
-			const usersId = UsersSessions.find({
-				connections: {
-					instanceId: {
-						$nin: ids
-					}
-				}
-			}, { fields: { _id: 1 } });
+		const usersId = UsersSessions.find({
+			connections
+		}, { fields: { _id: 1 } });
 
-			const updateSessions = {
-				$pull: {
-					connections: {
-						instanceId: {
-							$nin: ids
-						}
-					}
-				}
-			};
+		const updateSessions = {
+			$pull: {
+				connections
+			}
+		};
 
-			Meteor.users.update({ _id:{ $in: ids }}, {$set: {status: 'offline', statusConnection: 'offline'}}, multi);
-			UsersSessions.update({}, update, multi);
-		} : function() {
-			UsersSessions.remove({});
-			Meteor.users.update({}, {$set: {status: 'offline', statusConnection: 'offline'}}, multi);
-		}
+		Meteor.users.update({ _id:{ $in: ids }}, {$set: {status: 'offline', statusConnection: 'offline'}}, multi);
+		UsersSessions.update({}, update, multi);
+	} : function() {
+		UsersSessions.remove({});
+		Meteor.users.update({}, {$set: {status: 'offline', statusConnection: 'offline'}}, multi);
 	},
 
 	removeConnectionsByInstanceId: function(instanceId) {
@@ -121,13 +117,13 @@ UserPresence = {
 	},
 
 	createConnection: function(_id, connection, status = 'online', metadata) {
-		if (!userId || !connection.id) {
+		if (!_id || !connection.id) {
 			return;
 		}
 
-		connection.UserPresenceUserId = userId;
+		connection.UserPresenceUserId = _id;
 
-		logGreen('[user-presence] createConnection', userId, connection.id, status, metadata);
+		logGreen('[user-presence] createConnection', _id, connection.id, status, metadata);
 
 		const query = { _id };
 
@@ -239,7 +235,7 @@ UserPresence = {
 		process.on('exit', Meteor.bindEnvironment(instanceId ? function() {
 			UserPresence.removeConnectionsByInstanceId(instanceId);
 		} : function() {
-				UserPresence.removeAllConnections();
+			UserPresence.removeAllConnections();
 		}));
 
 		if (Package['accounts-base']) {

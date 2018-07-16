@@ -5,6 +5,10 @@ Package.describe({
 	git: 'https://github.com/Konecty/meteor-user-presence'
 });
 
+Npm.depends({
+  ioredis: '4.0.0-2'
+});
+
 Package.onUse(function(api) {
 	api.versionsFrom('1.6.1.3');
 
