@@ -50,7 +50,7 @@ const multi = { multi: true }
 const instanceId = Package['konecty:multiple-instances-status'] && InstanceStatus.id();
 
 const redisSetStatus = field ? ({ _id }, status) => {
-	const user = Meteor.user.findOne({
+	const user = Meteor.users.findOne({
 		_id
 	}, { fields: { [field]: 1} })
 	if(!user) {
@@ -66,7 +66,7 @@ const redisSetStatus = field ? ({ _id }, status) => {
 const redisOnSetStatus = field ? (pattern, topic, status) => {
 	if(`${ prefix }setUserPresence/*` === pattern) {
 		const identifier = topic.replace(pattern.replace('*', ''), '');
-		const user = Meteor.user.findOne({
+		const user = Meteor.users.findOne({
 			[field]: identifier
 		}, { fields: { _id: 1} })
 		if(!user) {
