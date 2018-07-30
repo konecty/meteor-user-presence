@@ -126,7 +126,11 @@ UserPresence = {
 			connection.metadata = metadata;
 		}
 
-		UsersSessions.upsert(query, update);
+        var result = UsersSessions.upsert(query, update);
+
+        if (result && connection.closed) {
+            UserPresence.removeConnection(connection.id);
+        }
 	},
 
 	setConnection: function(userId, connection, status) {
@@ -206,6 +210,8 @@ UserPresence = {
 	start: function() {
 		Meteor.onConnection(function(connection) {
 			connection.onClose(function() {
+                connection.closed = true;
+
 				if (connection.UserPresenceUserId !== undefined && connection.UserPresenceUserId !== null) {
 					UserPresence.removeConnection(connection.id);
 				}
