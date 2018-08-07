@@ -127,7 +127,9 @@ UserPresence = {
 			connection.metadata = metadata;
 		}
 
-		UsersSessions.upsert(query, update);
+		if (!connection.closed) {
+			UsersSessions.upsert(query, update);
+		}
 	},
 
 	setConnection: function(userId, connection, status) {
