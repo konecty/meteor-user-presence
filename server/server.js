@@ -86,7 +86,8 @@ UserPresence = {
 	},
 
 	createConnection: function(userId, connection, status, metadata) {
-		if (!userId || !connection.id) {
+		// if connections is invalid, does not have an userId or is already closed, don't save it on db
+		if (!userId || !connection.id || connection.closed) {
 			return;
 		}
 
@@ -126,7 +127,10 @@ UserPresence = {
 			connection.metadata = metadata;
 		}
 
-		UsersSessions.upsert(query, update);
+		// make sure closed connections are being created
+		if (!connection.closed) {
+			UsersSessions.upsert(query, update);
+		}
 	},
 
 	setConnection: function(userId, connection, status) {
@@ -206,6 +210,9 @@ UserPresence = {
 	start: function() {
 		Meteor.onConnection(function(connection) {
 			connection.onClose(function() {
+				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
+				connection.closed = true;
+
 				if (connection.UserPresenceUserId !== undefined && connection.UserPresenceUserId !== null) {
 					UserPresence.removeConnection(connection.id);
 				}
