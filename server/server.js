@@ -127,6 +127,7 @@ UserPresence = {
 			connection.metadata = metadata;
 		}
 
+		// make sure closed connections are being created
 		if (!connection.closed) {
 			UsersSessions.upsert(query, update);
 		}
