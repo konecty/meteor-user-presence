@@ -1,3 +1,6 @@
+# 2.2.0 (2018-08-08)
+* Prevent already closed connections from being stored on db
+
 # 2.1.0 (2018-06-09)
 * Do not start timer if `awayTime` is `null`
 * Start user presence only once
