@@ -8,7 +8,6 @@ Package.describe({
 Package.onUse(function(api) {
 	api.versionsFrom('1.0.2.1');
 
-	api.use('nooitaf:colors@1.1.2_1');
 	api.use('underscore');
 	api.use('tracker');
 
@@ -25,4 +24,8 @@ Package.onTest(function(api) {
 	api.use('tinytest');
 	api.use('konecty:user-presence');
 	api.addFiles('konecty:user-presence-tests.js');
+});
+
+Npm.depends({
+  "colors": "1.3.2"
 });
