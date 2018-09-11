@@ -1,5 +1,5 @@
 /* globals UserPresence */
-
+var debounce = require('lodash.debounce');
 var timer, status;
 
 UserPresence = {
@@ -43,7 +43,7 @@ UserPresence = {
 		}
 		UserPresence.stopTimer();
 	},
-	setOnline: _.debounce(function() {
+	setOnline: debounce(function() {
 		if (status !== 'online') {
 			status = 'online';
 			UserPresence.connected && Meteor.call('UserPresence:online', UserPresence.userId);

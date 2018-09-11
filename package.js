@@ -8,7 +8,6 @@ Package.describe({
 Package.onUse(function(api) {
 	api.versionsFrom('1.0.2.1');
 
-	api.use('underscore');
 	api.use('tracker');
 
 	api.addFiles('common/common.js');
@@ -27,5 +26,6 @@ Package.onTest(function(api) {
 });
 
 Npm.depends({
-  "colors": "1.3.2"
+  "colors": "^1.3.2",
+  'lodash.debounce': '^4.17.10'
 });
