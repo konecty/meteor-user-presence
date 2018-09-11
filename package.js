@@ -9,8 +9,8 @@ Package.onUse(function(api) {
 	api.versionsFrom('1.0.2.1');
 
 	api.use('tracker');
-  api.use('check');
-  api.use('ecmascript');
+	api.use('check');
+	api.use('ecmascript');
 
 	api.addFiles('common/common.js');
 	api.addFiles('server/server.js', ['server']);
