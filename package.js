@@ -27,5 +27,5 @@ Package.onTest(function(api) {
 });
 
 Npm.depends({
-  "colors": "1.3.2"
+  "colors": "^1.3.2"
 });
