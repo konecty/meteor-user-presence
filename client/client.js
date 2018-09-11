@@ -84,6 +84,7 @@ UserPresence = {
 
 Meteor.methods({
 	'UserPresence:setDefaultStatus': function(status) {
+		check(status, String);
 		Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
 	},
 	'UserPresence:online': function() {

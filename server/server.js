@@ -283,21 +283,27 @@ UserPresence = {
 
 		Meteor.methods({
 			'UserPresence:connect': function(id, metadata) {
+        check(id, String);
+        check(metadata, Object);
 				this.unblock();
 				UserPresence.createConnection(id || this.userId, this.connection, 'online', metadata);
 			},
 
 			'UserPresence:away': function(id) {
+				check(id, String);
 				this.unblock();
 				UserPresence.setConnection(id || this.userId, this.connection, 'away');
 			},
 
 			'UserPresence:online': function(id) {
-				this.unblock();
+        check(id, String);
+        this.unblock();
 				UserPresence.setConnection(id || this.userId, this.connection, 'online');
 			},
 
 			'UserPresence:setDefaultStatus': function(id, status) {
+        check(id, String);
+        check(status, String);
 				this.unblock();
 
 				// backward compatible
