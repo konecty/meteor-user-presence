@@ -296,7 +296,7 @@ UserPresence = {
 			},
 
 			'UserPresence:online': function(id) {
-        check(id, String);
+        check(id, Match.Maybe(String));
         this.unblock();
 				UserPresence.setConnection(id || this.userId, this.connection, 'online');
 			},

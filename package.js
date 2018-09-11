@@ -10,6 +10,7 @@ Package.onUse(function(api) {
 
 	api.use('tracker');
   api.use('check');
+  api.use('ecmascript');
 
 	api.addFiles('common/common.js');
 	api.addFiles('server/server.js', ['server']);
@@ -27,6 +28,6 @@ Package.onTest(function(api) {
 });
 
 Npm.depends({
-  "colors": "^1.3.2",
-  'lodash.debounce': '^4.17.10'
+  'colors': '1.3.2',
+  'lodash': '4.17.10'
 });
