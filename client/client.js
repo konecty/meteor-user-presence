@@ -1,5 +1,5 @@
 /* globals UserPresence */
-var debounce = require('lodash/debounce');
+var debounce = require('lodash.debounce');
 var timer, status;
 
 UserPresence = {

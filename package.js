@@ -29,5 +29,5 @@ Package.onTest(function(api) {
 
 Npm.depends({
   'colors': '1.3.2',
-  'lodash': '4.17.10'
+  'lodash.debounce': '4.0.8'
 });
