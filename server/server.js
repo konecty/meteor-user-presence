@@ -1,5 +1,5 @@
 /* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
-require('colors');
+import 'colors';
 
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
 UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
@@ -283,14 +283,14 @@ UserPresence = {
 
 		Meteor.methods({
 			'UserPresence:connect': function(id, metadata) {
-				check(id, String);
-				check(metadata, Object);
+				check(id, Match.Maybe(String));
+				check(metadata, Match.Maybe(Object));
 				this.unblock();
 				UserPresence.createConnection(id || this.userId, this.connection, 'online', metadata);
 			},
 
 			'UserPresence:away': function(id) {
-				check(id, String);
+				check(id, Match.Maybe(String));
 				this.unblock();
 				UserPresence.setConnection(id || this.userId, this.connection, 'away');
 			},
@@ -302,8 +302,8 @@ UserPresence = {
 			},
 
 			'UserPresence:setDefaultStatus': function(id, status) {
-				check(id, String);
-				check(status, String);
+				check(id, Match.Maybe(String));
+				check(status, Match.Maybe(String));
 				this.unblock();
 
 				// backward compatible
