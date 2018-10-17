@@ -1,4 +1,5 @@
 /* globals UserPresence */
+import { debounce } from '../utils';
 
 var timer, status;
 
@@ -43,7 +44,7 @@ UserPresence = {
 		}
 		UserPresence.stopTimer();
 	},
-	setOnline: _.debounce(function() {
+	setOnline: debounce(function() {
 		if (status !== 'online') {
 			status = 'online';
 			UserPresence.connected && Meteor.call('UserPresence:online', UserPresence.userId);
@@ -84,6 +85,7 @@ UserPresence = {
 
 Meteor.methods({
 	'UserPresence:setDefaultStatus': function(status) {
+		check(status, String);
 		Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
 	},
 	'UserPresence:online': function() {
