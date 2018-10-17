@@ -16,7 +16,7 @@ Package.onUse(function(api) {
 	api.addFiles('server/monitor.js', ['server']);
 	api.addFiles('client/client.js', ['client']);
 
-	api.export(['UserPresence'], ['server', 'client']);
+	api.export(['UserPresence', 'UsersSessions'], ['server', 'client']);
 	api.export(['UserPresenceMonitor', 'UserPresenceEvents'], ['server']);
 });
 
