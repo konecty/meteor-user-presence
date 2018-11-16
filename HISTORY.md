@@ -1,3 +1,9 @@
+# 2.3.0 (2018-11-16)
+* Export `UsersSessions` collection
+* Remove `underscore` package dependency
+* Add `check` for all methods' params
+* Replace `nooitaf:colors` Meteor package for its npm package
+
 # 2.2.0 (2018-08-08)
 * Prevent already closed connections from being stored on db
 

@@ -1,7 +1,7 @@
 Package.describe({
 	name: 'konecty:user-presence',
 	summary: 'Track user status',
-	version: '2.2.0',
+	version: '2.3.0',
 	git: 'https://github.com/Konecty/meteor-user-presence'
 });
 
@@ -10,7 +10,7 @@ Package.onUse(function(api) {
 
 	api.use('tracker');
 	api.use('check');
-	api.use('ecmascript');
+	api.use('ecmascript@0.12.2');
 
 	api.addFiles('common/common.js');
 	api.addFiles('server/server.js', ['server']);
