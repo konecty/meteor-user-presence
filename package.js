@@ -6,11 +6,11 @@ Package.describe({
 });
 
 Package.onUse(function(api) {
-	api.versionsFrom('1.0.2.1');
-
+	api.use('accounts-base');
 	api.use('tracker');
 	api.use('check');
 	api.use('ecmascript@0.12.2');
+	api.use('rocketchat:streamer');
 
 	api.addFiles('common/common.js');
 	api.addFiles('server/server.js', ['server']);
@@ -18,7 +18,7 @@ Package.onUse(function(api) {
 	api.addFiles('client/client.js', ['client']);
 
 	api.export(['UserPresence', 'UsersSessions'], ['server', 'client']);
-	api.export(['UserPresenceMonitor', 'UserPresenceEvents'], ['server']);
+	api.export(['UserPresenceMonitor', 'UserPresenceEvents', 'PresenceStream'], ['server']);
 });
 
 Package.onTest(function(api) {
