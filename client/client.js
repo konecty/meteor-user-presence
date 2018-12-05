@@ -1,6 +1,5 @@
 /* globals UserPresence */
 import { debounce } from '../utils';
-
 let timer, status;
 const awayTime = Symbol('awayTime')
 const setUserPresence = debounce((newStatus) => {
@@ -68,17 +67,17 @@ UserPresence = {
 	setAway: () => setUserPresence('away'),
 	setOnline: () => setUserPresence('online'),
 	start: function(userId) {
-		if (this.started) {
-			return;
-		}
+		this.start = () => {};
 		this.userId = userId;
 
 		// register a tracker on connection status so we can setup the away timer again (on reconnect)
 		Tracker.autorun(() => {
-			const connectionStatus = Meteor.status();
-			this.connected = connectionStatus.connected;
-			if (connectionStatus.connected) {
-				return this.setOnline();
+			const { connected } = Meteor.status();
+			this.connected = connected;
+			if (connected) {
+				UserPresence.startTimer();
+				status = 'online';
+				return;
 			}
 			this.stopTimer();
 			status = 'offline';
@@ -87,23 +86,23 @@ UserPresence = {
 
 		['mousemove', 'mousedown', 'touchend', 'keydown']
 			.forEach(key => document.addEventListener(key, this.setOnline));
+
 		window.addEventListener('focus', this.setOnline);
 
 		if (this.awayOnWindowBlur === true) {
 			window.addEventListener('blur', this.setAway);
 		}
 
-		this.started = true;
 	}
 };
 
 Meteor.methods({
 	'UserPresence:setDefaultStatus': function(status) {
 		check(status, String);
-		Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
+		Meteor.users.update({_id: Meteor.userId()}, {$set: { status, statusDefault: status }});
 	},
 	'UserPresence:online': function() {
-		let user = Meteor.user();
+		const user = Meteor.user();
 		if (user && user.status !== 'online' && user.statusDefault === 'online') {
 			Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
 		}

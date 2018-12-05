@@ -1,8 +1,14 @@
-/* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
+/* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence, PresenceStream */
 import 'colors';
 
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
 UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
+
+PresenceStream = new Meteor.Streamer('user-presence', { retransmit: false, retransmitToSelf: true });
+PresenceStream.serverOnly = true;
+PresenceStream.allowRead('none');
+PresenceStream.allowEmit('all');
+PresenceStream.allowWrite('none');
 
 var allowedStatus = ['online', 'away', 'busy', 'offline'];
 
@@ -36,30 +42,6 @@ UserPresence = {
 		logEnable = true;
 	},
 
-	removeLostConnections: function() {
-		if (Package['konecty:multiple-instances-status']) {
-			var ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch();
-
-			ids = ids.map(function(id) {
-				return id._id;
-			});
-
-			var update = {
-				$pull: {
-					connections: {
-						instanceId: {
-							$nin: ids
-						}
-					}
-				}
-			};
-
-			UsersSessions.update({}, update, {multi: true});
-		} else {
-			UsersSessions.remove({});
-		}
-	},
-
 	removeConnectionsByInstanceId: function(instanceId) {
 		logRed('[user-presence] removeConnectionsByInstanceId', instanceId);
 		var update = {
@@ -76,14 +58,6 @@ UserPresence = {
 	removeAllConnections: function() {
 		logRed('[user-presence] removeAllConnections');
 		UsersSessions.remove({});
-	},
-
-	startObserveForDeletedServers: function() {
-		InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).observeChanges({
-			removed: function(id) {
-				UserPresence.removeConnectionsByInstanceId(id);
-			}
-		});
 	},
 
 	createConnection: function(userId, connection, status, metadata) {
@@ -243,12 +217,6 @@ UserPresence = {
 			this.ready();
 		});
 
-		if (Package['konecty:multiple-instances-status']) {
-			UserPresence.startObserveForDeletedServers();
-		}
-
-		UserPresence.removeLostConnections();
-
 		UserPresenceEvents.on('setStatus', function(userId, status) {
 			var user = Meteor.users.findOne(userId);
 			var statusConnection = status;
@@ -276,9 +244,21 @@ UserPresence = {
 				}
 			};
 
-			Meteor.users.update(query, update);
+			const result = Meteor.users.update(query, update);
 
-			UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
+			// if nothing updated, do not stream anything
+			if (result) {
+				UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
+
+				// emit internally
+				PresenceStream.emitWithScope('change', {}, {
+					_id: user._id,
+					username: user.username,
+					name: user.name,
+					status,
+					utcOffset: user.utcOffset,
+				});
+			}
 		});
 
 		Meteor.methods({
