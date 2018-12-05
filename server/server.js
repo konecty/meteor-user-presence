@@ -1,14 +1,8 @@
-/* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence, PresenceStream */
+/* globals InstanceStatus, UsersSessions, UserPresenceMonitor, UserPresence */
 import 'colors';
 
 UsersSessions._ensureIndex({'connections.instanceId': 1}, {sparse: 1, name: 'connections.instanceId'});
 UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections.id'});
-
-PresenceStream = new Meteor.Streamer('user-presence', { retransmit: false, retransmitToSelf: true });
-PresenceStream.serverOnly = true;
-PresenceStream.allowRead('none');
-PresenceStream.allowEmit('all');
-PresenceStream.allowWrite('none');
 
 var allowedStatus = ['online', 'away', 'busy', 'offline'];
 
@@ -246,18 +240,9 @@ UserPresence = {
 
 			const result = Meteor.users.update(query, update);
 
-			// if nothing updated, do not stream anything
+			// if nothing updated, do not emit anything
 			if (result) {
 				UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
-
-				// emit internally
-				PresenceStream.emitWithScope('change', {}, {
-					_id: user._id,
-					username: user.username,
-					name: user.name,
-					status,
-					utcOffset: user.utcOffset,
-				});
 			}
 		});
 
