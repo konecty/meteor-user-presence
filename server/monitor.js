@@ -1,7 +1,50 @@
-/* globals UserPresenceMonitor, UsersSessions */
+/* globals UserPresenceMonitor, UsersSessions, InstanceStatus */
 var EventEmitter = Npm.require('events');
 
 UserPresenceEvents = new EventEmitter();
+
+function monitorUsersSessions() {
+	UsersSessions.find({}).observe({
+		added: function(record) {
+			UserPresenceMonitor.processUserSession(record, 'added');
+		},
+		changed: function(record) {
+			UserPresenceMonitor.processUserSession(record, 'changed');
+		},
+		removed: function(record) {
+			UserPresenceMonitor.processUserSession(record, 'removed');
+		}
+	});
+}
+
+function monitorDeletedServers() {
+	InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).observeChanges({
+		removed: function(id) {
+			UserPresence.removeConnectionsByInstanceId(id);
+		}
+	});
+}
+
+function removeLostConnections() {
+	if (!Package['konecty:multiple-instances-status']) {
+		return UsersSessions.remove({});
+	}
+
+	var ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch().map(function(id) {
+		return id._id;
+	});
+
+	var update = {
+		$pull: {
+			connections: {
+				instanceId: {
+					$nin: ids
+				}
+			}
+		}
+	};
+	UsersSessions.update({}, update, {multi: true});
+}
 
 UserPresenceMonitor = {
 	/**
@@ -11,18 +54,14 @@ UserPresenceMonitor = {
 		UserPresenceEvents.on('setUserStatus', callback);
 	},
 
+	// following actions/observers will run only when presence monitor turned on
 	start: function() {
-		UsersSessions.find({}).observe({
-			added: function(record) {
-				UserPresenceMonitor.processUserSession(record, 'added');
-			},
-			changed: function(record) {
-				UserPresenceMonitor.processUserSession(record, 'changed');
-			},
-			removed: function(record) {
-				UserPresenceMonitor.processUserSession(record, 'removed');
-			}
-		});
+		monitorUsersSessions();
+		removeLostConnections();
+
+		if (Package['konecty:multiple-instances-status']) {
+			monitorDeletedServers();
+		}
 	},
 
 	processUserSession: function(record, action) {

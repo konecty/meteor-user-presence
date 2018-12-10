@@ -36,30 +36,6 @@ UserPresence = {
 		logEnable = true;
 	},
 
-	removeLostConnections: function() {
-		if (Package['konecty:multiple-instances-status']) {
-			var ids = InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).fetch();
-
-			ids = ids.map(function(id) {
-				return id._id;
-			});
-
-			var update = {
-				$pull: {
-					connections: {
-						instanceId: {
-							$nin: ids
-						}
-					}
-				}
-			};
-
-			UsersSessions.update({}, update, {multi: true});
-		} else {
-			UsersSessions.remove({});
-		}
-	},
-
 	removeConnectionsByInstanceId: function(instanceId) {
 		logRed('[user-presence] removeConnectionsByInstanceId', instanceId);
 		var update = {
@@ -76,14 +52,6 @@ UserPresence = {
 	removeAllConnections: function() {
 		logRed('[user-presence] removeAllConnections');
 		UsersSessions.remove({});
-	},
-
-	startObserveForDeletedServers: function() {
-		InstanceStatus.getCollection().find({}, {fields: {_id: 1}}).observeChanges({
-			removed: function(id) {
-				UserPresence.removeConnectionsByInstanceId(id);
-			}
-		});
 	},
 
 	createConnection: function(userId, connection, status, metadata) {
@@ -243,12 +211,6 @@ UserPresence = {
 			this.ready();
 		});
 
-		if (Package['konecty:multiple-instances-status']) {
-			UserPresence.startObserveForDeletedServers();
-		}
-
-		UserPresence.removeLostConnections();
-
 		UserPresenceEvents.on('setStatus', function(userId, status) {
 			var user = Meteor.users.findOne(userId);
 			var statusConnection = status;
@@ -276,9 +238,12 @@ UserPresence = {
 				}
 			};
 
-			Meteor.users.update(query, update);
+			const result = Meteor.users.update(query, update);
 
-			UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
+			// if nothing updated, do not emit anything
+			if (result) {
+				UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
+			}
 		});
 
 		Meteor.methods({
