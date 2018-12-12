@@ -20,7 +20,7 @@ const setUserPresence = debounce((newStatus) => {
 	}
 	status = newStatus;
 
-}, 5000)
+}, 5000);
 
 UserPresence = {
 	get awayTime() {
