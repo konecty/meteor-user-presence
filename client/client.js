@@ -20,7 +20,7 @@ const setUserPresence = debounce((newStatus) => {
 	}
 	status = newStatus;
 
-}, 5000)
+}, 5000);
 
 UserPresence = {
 	get awayTime() {
@@ -28,10 +28,10 @@ UserPresence = {
 	},
 	set awayTime(time) {
 		if (typeof time === "number") {
-			this[awayTime] = time > 0 ? Math.max(0, 30000) : time;
+			this[awayTime] = time > 0 ? Math.max(time, 30000) : time;
 		}
 	},
-	[awayTime]: 6000,//1 minute
+	[awayTime]: 60000, // 1 minute
 	awayOnWindowBlur: false,
 	callbacks: [],
 	connected: true,
@@ -67,6 +67,7 @@ UserPresence = {
 	setAway: () => setUserPresence('away'),
 	setOnline: () => setUserPresence('online'),
 	start: function(userId) {
+		// after first call remove function's body to be called once
 		this.start = () => {};
 		this.userId = userId;
 
