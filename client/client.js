@@ -31,7 +31,7 @@ UserPresence = {
 			this[awayTime] = time > 0 ? Math.max(0, 30000) : time;
 		}
 	},
-	[awayTime]: 6000,//1 minute
+	[awayTime]: 60000, // 1 minute
 	awayOnWindowBlur: false,
 	callbacks: [],
 	connected: true,
