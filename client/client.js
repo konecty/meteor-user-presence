@@ -1,7 +1,6 @@
 /* globals UserPresence */
 import { debounce } from '../utils';
 let timer, status;
-const awayTime = Symbol('awayTime')
 const setUserPresence = debounce((newStatus) => {
 	if (!UserPresence.connected || newStatus === status) {
 		return
@@ -23,15 +22,7 @@ const setUserPresence = debounce((newStatus) => {
 }, 5000);
 
 UserPresence = {
-	get awayTime() {
-		return this[awayTime];
-	},
-	set awayTime(time) {
-		if (typeof time === "number") {
-			this[awayTime] = time > 0 ? Math.max(time, 30000) : time;
-		}
-	},
-	[awayTime]: 60000, // 1 minute
+	awayTime: 60000, // 1 minute
 	awayOnWindowBlur: false,
 	callbacks: [],
 	connected: true,
