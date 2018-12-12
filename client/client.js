@@ -67,6 +67,7 @@ UserPresence = {
 	setAway: () => setUserPresence('away'),
 	setOnline: () => setUserPresence('online'),
 	start: function(userId) {
+		// after first call remove function's body to be called once
 		this.start = () => {};
 		this.userId = userId;
 
