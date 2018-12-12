@@ -28,7 +28,7 @@ UserPresence = {
 	},
 	set awayTime(time) {
 		if (typeof time === "number") {
-			this[awayTime] = time > 0 ? Math.max(0, 30000) : time;
+			this[awayTime] = time > 0 ? Math.max(time, 30000) : time;
 		}
 	},
 	[awayTime]: 60000, // 1 minute
