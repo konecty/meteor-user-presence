@@ -1,10 +1,27 @@
 /* globals UserPresence */
 import { debounce } from '../utils';
-
-var timer, status;
+let timer, status;
+const setUserPresence = debounce((newStatus) => {
+	if (!UserPresence.connected || newStatus === status) {
+		UserPresence.startTimer();
+		return;
+	}
+	switch (newStatus) {
+		case 'online':
+			Meteor.call('UserPresence:online', UserPresence.userId);
+			break;
+		case 'away':
+			Meteor.call('UserPresence:away', UserPresence.userId);
+			UserPresence.stopTimer();
+			break;
+		default:
+			return;
+	}
+	status = newStatus;
+}, 1000);
 
 UserPresence = {
-	awayTime: 60000, //1 minute
+	awayTime: 60000, // 1 minute
 	awayOnWindowBlur: false,
 	callbacks: [],
 	connected: true,
@@ -37,59 +54,44 @@ UserPresence = {
 	restartTimer: function() {
 		UserPresence.startTimer();
 	},
-	setAway: function() {
-		if (status !== 'away') {
-			status = 'away';
-			UserPresence.connected && Meteor.call('UserPresence:away', UserPresence.userId);
-		}
-		UserPresence.stopTimer();
-	},
-	setOnline: debounce(function() {
-		if (status !== 'online') {
-			status = 'online';
-			UserPresence.connected && Meteor.call('UserPresence:online', UserPresence.userId);
-		}
-		UserPresence.startTimer();
-	}, 1000),
+	setAway: () => setUserPresence('away'),
+	setOnline: () => setUserPresence('online'),
 	start: function(userId) {
-		if (UserPresence.started) {
-			return;
-		}
+		// after first call overwrite start function to only call startTimer
+		this.start = () => { this.startTimer(); };
 		this.userId = userId;
 
 		// register a tracker on connection status so we can setup the away timer again (on reconnect)
-		Tracker.autorun(function() {
-			var connectionStatus = Meteor.status();
-			UserPresence.connected = connectionStatus.connected;
-			if (connectionStatus.connected) {
-				UserPresence.setOnline();
-			} else {
-				UserPresence.stopTimer();
-				status = 'offline';
+		Tracker.autorun(() => {
+			const { connected } = Meteor.status();
+			this.connected = connected;
+			if (connected) {
+				this.startTimer();
+				status = 'online';
+				return;
 			}
+			this.stopTimer();
+			status = 'offline';
 		});
 
-		document.addEventListener('mousemove', UserPresence.setOnline);
-		document.addEventListener('mousedown', UserPresence.setOnline);
-		document.addEventListener('touchend', UserPresence.setOnline);
-		document.addEventListener('keydown', UserPresence.setOnline);
-		window.addEventListener('focus', UserPresence.setOnline);
+		['mousemove', 'mousedown', 'touchend', 'keydown']
+			.forEach(key => document.addEventListener(key, this.setOnline));
 
-		if (UserPresence.awayOnWindowBlur === true) {
-			window.addEventListener('blur', UserPresence.setAway);
+		window.addEventListener('focus', this.setOnline);
+
+		if (this.awayOnWindowBlur === true) {
+			window.addEventListener('blur', this.setAway);
 		}
-
-		UserPresence.started = true;
 	}
 };
 
 Meteor.methods({
 	'UserPresence:setDefaultStatus': function(status) {
 		check(status, String);
-		Meteor.users.update({_id: Meteor.userId()}, {$set: {status: status, statusDefault: status}});
+		Meteor.users.update({_id: Meteor.userId()}, {$set: { status, statusDefault: status }});
 	},
 	'UserPresence:online': function() {
-		var user = Meteor.user();
+		const user = Meteor.user();
 		if (user && user.status !== 'online' && user.statusDefault === 'online') {
 			Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
 		}
