@@ -3,12 +3,12 @@ import { debounce } from '../utils';
 let timer, status;
 const setUserPresence = debounce((newStatus) => {
 	if (!UserPresence.connected || newStatus === status) {
-		return
+		UserPresence.startTimer();
+		return;
 	}
-	switch(status) {
+	switch (newStatus) {
 		case 'online':
 			Meteor.call('UserPresence:online', UserPresence.userId);
-			UserPresence.startTimer();
 			break;
 		case 'away':
 			Meteor.call('UserPresence:away', UserPresence.userId);
@@ -18,8 +18,7 @@ const setUserPresence = debounce((newStatus) => {
 			return;
 	}
 	status = newStatus;
-
-}, 5000);
+}, 1000);
 
 UserPresence = {
 	awayTime: 60000, // 1 minute
@@ -58,8 +57,8 @@ UserPresence = {
 	setAway: () => setUserPresence('away'),
 	setOnline: () => setUserPresence('online'),
 	start: function(userId) {
-		// after first call remove function's body to be called once
-		this.start = () => {};
+		// after first call overwrite start function to only call startTimer
+		this.start = () => { this.startTimer(); };
 		this.userId = userId;
 
 		// register a tracker on connection status so we can setup the away timer again (on reconnect)
@@ -67,14 +66,13 @@ UserPresence = {
 			const { connected } = Meteor.status();
 			this.connected = connected;
 			if (connected) {
-				UserPresence.startTimer();
+				this.startTimer();
 				status = 'online';
 				return;
 			}
 			this.stopTimer();
 			status = 'offline';
 		});
-
 
 		['mousemove', 'mousedown', 'touchend', 'keydown']
 			.forEach(key => document.addEventListener(key, this.setOnline));
@@ -84,7 +82,6 @@ UserPresence = {
 		if (this.awayOnWindowBlur === true) {
 			window.addEventListener('blur', this.setAway);
 		}
-
 	}
 };
 
