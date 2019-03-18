@@ -251,32 +251,43 @@ UserPresence = {
 				check(id, Match.Maybe(String));
 				check(metadata, Match.Maybe(Object));
 				this.unblock();
-				UserPresence.createConnection(id || this.userId, this.connection, 'online', metadata);
+				if (id !== this.userId && Meteor.users.findOne(id)) {
+					return;
+				}
+				UserPresence.createConnection(this.userId, this.connection, 'online', metadata);
 			},
 
 			'UserPresence:away': function(id) {
 				check(id, Match.Maybe(String));
 				this.unblock();
-				UserPresence.setConnection(id || this.userId, this.connection, 'away');
+				if (id !== this.userId && Meteor.users.findOne(id)) {
+					return;
+				}
+				UserPresence.setConnection(this.userId, this.connection, 'away');
 			},
 
 			'UserPresence:online': function(id) {
 				check(id, Match.Maybe(String));
 				this.unblock();
-				UserPresence.setConnection(id || this.userId, this.connection, 'online');
+				if (id !== this.userId && Meteor.users.findOne(id)) {
+					return;
+				}
+				UserPresence.setConnection(this.userId, this.connection, 'online');
 			},
 
 			'UserPresence:setDefaultStatus': function(id, status) {
 				check(id, Match.Maybe(String));
 				check(status, Match.Maybe(String));
 				this.unblock();
+				if (id !== this.userId && Meteor.users.findOne(id)) {
+					return;
+				}
 
 				// backward compatible
 				if (arguments.length === 1) {
 					status = id;
-					id = this.userId;
 				}
-				UserPresence.setDefaultStatus(id || this.userId, status);
+				UserPresence.setDefaultStatus(this.userId, status);
 			}
 		});
 	}
