@@ -31,6 +31,18 @@ var logYellow = function() {
 	log(Array.prototype.slice.call(arguments).join(' '), 'yellow');
 };
 
+var checkUser = function(id, userId) {
+	if (!id || !userId || id === userId) {
+		return true;
+	}
+	var user = Meteor.users.findOne(id, { fields: { _id: 1 } });
+	if (user) {
+		throw new Meteor.Error('cannot-change-other-users-status');
+	}
+
+	return true;
+}
+
 UserPresence = {
 	activeLogs: function() {
 		logEnable = true;
@@ -251,43 +263,35 @@ UserPresence = {
 				check(id, Match.Maybe(String));
 				check(metadata, Match.Maybe(Object));
 				this.unblock();
-				if (id !== this.userId && Meteor.users.findOne(id)) {
-					return;
-				}
-				UserPresence.createConnection(this.userId, this.connection, 'online', metadata);
+				checkUser(id, this.userId);
+				UserPresence.createConnection(id || this.userId, this.connection, 'online', metadata);
 			},
 
 			'UserPresence:away': function(id) {
 				check(id, Match.Maybe(String));
 				this.unblock();
-				if (id !== this.userId && Meteor.users.findOne(id)) {
-					return;
-				}
-				UserPresence.setConnection(this.userId, this.connection, 'away');
+				checkUser(id, this.userId);
+				UserPresence.setConnection(id || this.userId, this.connection, 'away');
 			},
 
 			'UserPresence:online': function(id) {
 				check(id, Match.Maybe(String));
 				this.unblock();
-				if (id !== this.userId && Meteor.users.findOne(id)) {
-					return;
-				}
-				UserPresence.setConnection(this.userId, this.connection, 'online');
+				checkUser(id, this.userId);
+				UserPresence.setConnection(id || this.userId, this.connection, 'online');
 			},
 
 			'UserPresence:setDefaultStatus': function(id, status) {
 				check(id, Match.Maybe(String));
 				check(status, Match.Maybe(String));
 				this.unblock();
-				if (id !== this.userId && Meteor.users.findOne(id)) {
-					return;
-				}
+				checkUser(id, this.userId);
 
 				// backward compatible
 				if (arguments.length === 1) {
 					status = id;
 				}
-				UserPresence.setDefaultStatus(this.userId, status);
+				UserPresence.setDefaultStatus(id || this.userId, status);
 			}
 		});
 	}
