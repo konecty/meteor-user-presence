@@ -24,7 +24,7 @@ Package.onUse(function(api) {
 Package.onTest(function(api) {
 	api.use('tinytest');
 	api.use('konecty:user-presence');
-	api.addFiles('konecty:user-presence-tests.js');
+	api.addFiles('user-presence-tests.js');
 });
 
 Npm.depends({
