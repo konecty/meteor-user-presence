@@ -134,9 +134,9 @@ UserPresence = {
 		}
 
 		if (status === 'online') {
-			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online'}});
+			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'online'}}, {$set: {status: 'online', statusChangedTs: now}});
 		} else if (status === 'away') {
-			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away'}});
+			Meteor.users.update({_id: userId, statusDefault: 'online', status: {$ne: 'away'}}, {$set: {status: 'away', statusChangedTs: now}});
 		}
 	},
 
@@ -231,6 +231,10 @@ UserPresence = {
 				]
 			};
 
+			const now = new Date();
+			const lastStatusChangedTs = user.statusChangedTs || now;
+			let statusChangedTs = lastStatusChangedTs;
+
 			var update = {
 				$set: {
 					status: status,
@@ -238,11 +242,17 @@ UserPresence = {
 				}
 			};
 
+			// Only reset the statusChangedTs when the status change is to/from online. This reduces false statusChangedTs updates when a non-online status moves to offline.
+			if (user.status !== status && (user.status === 'online' || status === 'online' )) {
+				update.$set.statusChangedTs = now;
+				statusChangedTs = now;
+			}
+
 			const result = Meteor.users.update(query, update);
 
 			// if nothing updated, do not emit anything
 			if (result) {
-				UserPresenceEvents.emit('setUserStatus', user, status, statusConnection);
+				UserPresenceEvents.emit('setUserStatus', user, status, statusConnection, statusChangedTs);
 			}
 		});
 

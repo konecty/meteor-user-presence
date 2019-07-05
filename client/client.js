@@ -35,9 +35,9 @@ UserPresence = {
 		this.callbacks.push(callback);
 	},
 
-	runCallbacks: function(user, status) {
+	runCallbacks: function(user, status, statusChangedTs) {
 		this.callbacks.forEach(function(callback) {
-			callback.call(null, user, status);
+			callback.call(null, user, status, statusChangedTs);
 		});
 	},
 
@@ -92,13 +92,15 @@ Meteor.methods({
 	},
 	'UserPresence:online': function() {
 		const user = Meteor.user();
+		const now = Date.now();
 		if (user && user.status !== 'online' && user.statusDefault === 'online') {
-			Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online'}});
+			Meteor.users.update({_id: Meteor.userId()}, {$set: {status: 'online', statusChangedTs: now}});
 		}
-		UserPresence.runCallbacks(user, 'online');
+		UserPresence.runCallbacks(user, 'online', now);
 	},
 	'UserPresence:away': function() {
 		var user = Meteor.user();
-		UserPresence.runCallbacks(user, 'away');
+		const now = Date.now();
+		UserPresence.runCallbacks(user, 'away', now);
 	}
 });
