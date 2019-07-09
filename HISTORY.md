@@ -1,3 +1,9 @@
+# 2.4.0 (2018-12-13)
+* Allow presence monitoring to be completely disabled
+* Do not emit a status change if it has not changed
+* Do not call `connect` anymore
+* Add a `debounce` to `setAway`
+
 # 2.3.0 (2018-11-16)
 * Export `UsersSessions` collection
 * Remove `underscore` package dependency
