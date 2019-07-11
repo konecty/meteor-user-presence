@@ -200,6 +200,10 @@ UserPresence = {
 			Accounts.onLogin(function(login) {
 				UserPresence.createConnection(login.user._id, login.connection);
 			});
+
+			Accounts.onLogout(function(login) {
+				UserPresence.removeConnection(login.connection.id);
+			});
 		}
 
 		Meteor.publish(null, function() {
