@@ -1,3 +1,6 @@
+# 2.5.0 (2019-07-11)
+* Remove user's connection on logout
+
 # 2.4.0 (2018-12-13)
 * Allow presence monitoring to be completely disabled
 * Do not emit a status change if it has not changed
