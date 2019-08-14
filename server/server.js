@@ -31,6 +31,18 @@ var logYellow = function() {
 	log(Array.prototype.slice.call(arguments).join(' '), 'yellow');
 };
 
+var checkUser = function(id, userId) {
+	if (!id || !userId || id === userId) {
+		return true;
+	}
+	var user = Meteor.users.findOne(id, { fields: { _id: 1 } });
+	if (user) {
+		throw new Meteor.Error('cannot-change-other-users-status');
+	}
+
+	return true;
+}
+
 UserPresence = {
 	activeLogs: function() {
 		logEnable = true;
@@ -255,18 +267,21 @@ UserPresence = {
 				check(id, Match.Maybe(String));
 				check(metadata, Match.Maybe(Object));
 				this.unblock();
+				checkUser(id, this.userId);
 				UserPresence.createConnection(id || this.userId, this.connection, 'online', metadata);
 			},
 
 			'UserPresence:away': function(id) {
 				check(id, Match.Maybe(String));
 				this.unblock();
+				checkUser(id, this.userId);
 				UserPresence.setConnection(id || this.userId, this.connection, 'away');
 			},
 
 			'UserPresence:online': function(id) {
 				check(id, Match.Maybe(String));
 				this.unblock();
+				checkUser(id, this.userId);
 				UserPresence.setConnection(id || this.userId, this.connection, 'online');
 			},
 
@@ -275,11 +290,12 @@ UserPresence = {
 				check(status, Match.Maybe(String));
 				this.unblock();
 
-				// backward compatible
+				// backward compatible (receives status as first argument)
 				if (arguments.length === 1) {
-					status = id;
-					id = this.userId;
+					UserPresence.setDefaultStatus(this.userId, id);
+					return;
 				}
+				checkUser(id, this.userId);
 				UserPresence.setDefaultStatus(id || this.userId, status);
 			}
 		});
