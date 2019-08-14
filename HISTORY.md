@@ -1,3 +1,6 @@
+# 2.6.0 (2019-08-14)
+* Do not allow users change another users status (#42)
+
 # 2.5.0 (2019-07-11)
 * Remove user's connection on logout
 
