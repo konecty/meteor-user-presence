@@ -285,12 +285,13 @@ UserPresence = {
 				check(id, Match.Maybe(String));
 				check(status, Match.Maybe(String));
 				this.unblock();
-				checkUser(id, this.userId);
 
-				// backward compatible
+				// backward compatible (receives status as first argument)
 				if (arguments.length === 1) {
-					status = id;
+					UserPresence.setDefaultStatus(this.userId, id);
+					return;
 				}
+				checkUser(id, this.userId);
 				UserPresence.setDefaultStatus(id || this.userId, status);
 			}
 		});
