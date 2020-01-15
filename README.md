@@ -8,7 +8,7 @@ This package monitors the user to track user's state and save 3 fields in user's
 * statusConnection - Connection status (offline, online and away)
 * status
   * Offline if **statusConnection** or **statusDefault** are offline
-  * Seme as **statusConnection** if **statusDefault** is online
+  * Same as **statusConnection** if **statusDefault** is online
   * Same as **statusDefault**
 
 ## How to use
