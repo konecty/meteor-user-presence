@@ -6,7 +6,7 @@ UsersSessions._ensureIndex({'connections.id': 1}, {sparse: 1, name: 'connections
 
 var allowedStatus = ['online', 'away', 'busy', 'offline'];
 
-var logEnable = false;
+var logEnable = process.env.ENABLE_PRESENCE_LOGS === 'true';
 
 var log = function(msg, color) {
 	if (logEnable) {
@@ -185,7 +185,7 @@ UserPresence = {
 			}
 		};
 
-		UsersSessions.update(query, update);
+		return UsersSessions.update(query, update);
 	},
 
 	start: function() {
@@ -194,8 +194,11 @@ UserPresence = {
 				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
 				connection.closed = true;
 
-				if (connection.UserPresenceUserId !== undefined && connection.UserPresenceUserId !== null) {
-					UserPresence.removeConnection(connection.id);
+				var result = UserPresence.removeConnection(connection.id);
+				if (!result) {
+					Meteor.setTimeout(function() {
+						UserPresence.removeConnection(connection.id);
+					}, 2000);
 				}
 			});
 		});
