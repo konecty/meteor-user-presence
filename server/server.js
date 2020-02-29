@@ -66,13 +66,30 @@ UserPresence = {
 		UsersSessions.remove({});
 	},
 
+	getConnectionHandle(connectionId) {
+		const internalConnection = Meteor.server.sessions.get(connectionId);
+
+		if (!internalConnection) {
+			return;
+		}
+
+		return internalConnection.connectionHandle;
+	},
+
 	createConnection: function(userId, connection, status, metadata) {
 		// if connections is invalid, does not have an userId or is already closed, don't save it on db
 		if (!userId || !connection.id || connection.closed) {
 			return;
 		}
 
+		const connectionHandle = UserPresence.getConnectionHandle(connection.id);
+
+		if (!connectionHandle || connectionHandle.closed) {
+			return;
+		}
+
 		connection.UserPresenceUserId = userId;
+		connectionHandle.UserPresenceUserId = userId;
 
 		status = status || 'online';
 
@@ -109,7 +126,7 @@ UserPresence = {
 		}
 
 		// make sure closed connections are being created
-		if (!connection.closed) {
+		if (!connection.closed && !connectionHandle.closed) {
 			UsersSessions.upsert(query, update);
 		}
 	},
@@ -190,8 +207,12 @@ UserPresence = {
 
 	start: function() {
 		Meteor.onConnection(function(connection) {
+			const connectionHandle = UserPresence.getConnectionHandle(connection.id);
 			connection.onClose(function() {
 				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
+				if (connectionHandle) {
+					connectionHandle.closed = true;
+				}
 				connection.closed = true;
 
 				var result = UserPresence.removeConnection(connection.id);
@@ -222,9 +243,13 @@ UserPresence = {
 		}
 
 		Meteor.publish(null, function() {
-			if (this.userId == null && this.connection.UserPresenceUserId !== undefined && this.connection.UserPresenceUserId !== null) {
-				UserPresence.removeConnection(this.connection.id);
-				delete this.connection.UserPresenceUserId;
+			if (this.userId == null && this.connection && this.connection.id) {
+				const connectionHandle = UserPresence.getConnectionHandle(this.connection.id);
+				if (connectionHandle && (this.connection.UserPresenceUserId != null || connectionHandle.UserPresenceUserId != null)) {
+					UserPresence.removeConnection(this.connection.id);
+					delete this.connection.UserPresenceUserId;
+					delete connectionHandle.UserPresenceUserId;
+				}
 			}
 
 			this.ready();
