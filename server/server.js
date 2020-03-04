@@ -66,13 +66,29 @@ UserPresence = {
 		UsersSessions.remove({});
 	},
 
-	createConnection: function(userId, connection, status, metadata) {
-		// if connections is invalid, does not have an userId or is already closed, don't save it on db
-		if (!userId || !connection.id || connection.closed) {
+	getConnectionHandle(connectionId) {
+		const internalConnection = Meteor.server.sessions.get(connectionId);
+
+		if (!internalConnection) {
 			return;
 		}
 
-		connection.UserPresenceUserId = userId;
+		return internalConnection.connectionHandle;
+	},
+
+	createConnection: function(userId, connection, status, metadata) {
+		// if connections is invalid, does not have an userId or is already closed, don't save it on db
+		if (!userId || !connection.id) {
+			return;
+		}
+
+		const connectionHandle = UserPresence.getConnectionHandle(connection.id);
+
+		if (!connectionHandle || connectionHandle.closed) {
+			return;
+		}
+
+		connectionHandle.UserPresenceUserId = userId;
 
 		status = status || 'online';
 
@@ -109,7 +125,7 @@ UserPresence = {
 		}
 
 		// make sure closed connections are being created
-		if (!connection.closed) {
+		if (!connectionHandle.closed) {
 			UsersSessions.upsert(query, update);
 		}
 	},
@@ -190,15 +206,16 @@ UserPresence = {
 
 	start: function() {
 		Meteor.onConnection(function(connection) {
+			const connectionHandle = UserPresence.getConnectionHandle(connection.id);
 			connection.onClose(function() {
 				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
-				connection.closed = true;
+				if (!connectionHandle) {
+					return;
+				}
+				connectionHandle.closed = true;
 
-				var result = UserPresence.removeConnection(connection.id);
-				if (!result) {
-					Meteor.setTimeout(function() {
-						UserPresence.removeConnection(connection.id);
-					}, 2000);
+				if (connectionHandle.UserPresenceUserId != null) {
+					UserPresence.removeConnection(connection.id);
 				}
 			});
 		});
@@ -222,9 +239,12 @@ UserPresence = {
 		}
 
 		Meteor.publish(null, function() {
-			if (this.userId == null && this.connection.UserPresenceUserId !== undefined && this.connection.UserPresenceUserId !== null) {
-				UserPresence.removeConnection(this.connection.id);
-				delete this.connection.UserPresenceUserId;
+			if (this.userId == null && this.connection && this.connection.id) {
+				const connectionHandle = UserPresence.getConnectionHandle(this.connection.id);
+				if (connectionHandle && connectionHandle.UserPresenceUserId != null) {
+					UserPresence.removeConnection(this.connection.id);
+					delete connectionHandle.UserPresenceUserId;
+				}
 			}
 
 			this.ready();
