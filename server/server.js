@@ -209,12 +209,13 @@ UserPresence = {
 			const connectionHandle = UserPresence.getConnectionHandle(connection.id);
 			connection.onClose(function() {
 				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
-				if (connectionHandle) {
-					connectionHandle.closed = true;
+				if (!connectionHandle) {
+					return;
+				}
+				connectionHandle.closed = true;
 
-					if (connectionHandle.UserPresenceUserId != null) {
-						UserPresence.removeConnection(connection.id);
-					}
+				if (connectionHandle.UserPresenceUserId != null) {
+					UserPresence.removeConnection(connection.id);
 				}
 			});
 		});
