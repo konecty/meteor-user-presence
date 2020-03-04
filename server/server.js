@@ -78,7 +78,7 @@ UserPresence = {
 
 	createConnection: function(userId, connection, status, metadata) {
 		// if connections is invalid, does not have an userId or is already closed, don't save it on db
-		if (!userId || !connection.id || connection.closed) {
+		if (!userId || !connection.id) {
 			return;
 		}
 
@@ -88,7 +88,6 @@ UserPresence = {
 			return;
 		}
 
-		connection.UserPresenceUserId = userId;
 		connectionHandle.UserPresenceUserId = userId;
 
 		status = status || 'online';
@@ -126,7 +125,7 @@ UserPresence = {
 		}
 
 		// make sure closed connections are being created
-		if (!connection.closed && !connectionHandle.closed) {
+		if (!connectionHandle.closed) {
 			UsersSessions.upsert(query, update);
 		}
 	},
@@ -212,14 +211,10 @@ UserPresence = {
 				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
 				if (connectionHandle) {
 					connectionHandle.closed = true;
-				}
-				connection.closed = true;
 
-				var result = UserPresence.removeConnection(connection.id);
-				if (!result) {
-					Meteor.setTimeout(function() {
+					if (connectionHandle.UserPresenceUserId != null) {
 						UserPresence.removeConnection(connection.id);
-					}, 2000);
+					}
 				}
 			});
 		});
@@ -245,9 +240,8 @@ UserPresence = {
 		Meteor.publish(null, function() {
 			if (this.userId == null && this.connection && this.connection.id) {
 				const connectionHandle = UserPresence.getConnectionHandle(this.connection.id);
-				if (connectionHandle && (this.connection.UserPresenceUserId != null || connectionHandle.UserPresenceUserId != null)) {
+				if (connectionHandle && connectionHandle.UserPresenceUserId != null) {
 					UserPresence.removeConnection(this.connection.id);
-					delete this.connection.UserPresenceUserId;
 					delete connectionHandle.UserPresenceUserId;
 				}
 			}
