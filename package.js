@@ -1,7 +1,7 @@
 Package.describe({
 	name: 'konecty:user-presence',
 	summary: 'Track user status',
-	version: '2.6.1',
+	version: '2.6.2',
 	git: 'https://github.com/Konecty/meteor-user-presence'
 });
 
