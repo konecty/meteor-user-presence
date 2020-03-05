@@ -21,8 +21,8 @@ fetch@0.1.1
 geojson-utils@1.0.10
 id-map@1.1.0
 inter-process-messaging@0.1.0
-konecty:user-presence@2.6.2
-local-test:konecty:user-presence@2.6.2
+konecty:user-presence@2.6.3
+local-test:konecty:user-presence@2.6.3
 logging@1.1.20
 meteor@1.9.3
 minimongo@1.4.5
