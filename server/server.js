@@ -206,8 +206,15 @@ UserPresence = {
 
 	start: function() {
 		Meteor.onConnection(function(connection) {
-			const connectionHandle = UserPresence.getConnectionHandle(connection.id);
+			const session = Meteor.server.sessions.get(connection.id);
+
 			connection.onClose(function() {
+				if (!session) {
+					return;
+				}
+
+				const connectionHandle = session.connectionHandle;
+
 				// mark connection as closed so if it drops in the middle of the process it doesn't even is created
 				if (!connectionHandle) {
 					return;
@@ -243,7 +250,6 @@ UserPresence = {
 				const connectionHandle = UserPresence.getConnectionHandle(this.connection.id);
 				if (connectionHandle && connectionHandle.UserPresenceUserId != null) {
 					UserPresence.removeConnection(this.connection.id);
-					delete connectionHandle.UserPresenceUserId;
 				}
 			}
 
