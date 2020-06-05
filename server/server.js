@@ -126,8 +126,16 @@ UserPresence = {
 
 		// make sure closed connections are being created
 		if (!connectionHandle.closed) {
-			UsersSessions.upsert(query, update);
-		}
+      // prevent duplicate connectionIds from being inserted into the connections array
+      const existingSession = UsersSessions.findOne({
+        _id: userId,
+        'connections.id': connection.id
+      });
+
+      if (!existingSession) {
+        UsersSessions.upsert(query, update);
+      }
+    }
 	},
 
 	setConnection: function(userId, connection, status) {
